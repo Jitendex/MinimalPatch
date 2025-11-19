@@ -37,10 +37,10 @@ public sealed class PatchTest
     private static void PatchApplyTest(int number)
     {
         var diff = File.ReadAllText(Path.Join("Data", $"hamlet_ending_{number}.patch"));
-        var originalText = File.ReadAllText(Path.Join("Data", "hamlet_ending_old.txt"));
-        var expectedText = File.ReadAllText(Path.Join("Data", "hamlet_ending_new.txt"));
-        var newText = Patch.Apply(diff, originalText);
-        Assert.AreEqual(expectedText, newText);
+        var original = File.ReadAllText(Path.Join("Data", "hamlet_ending_old.txt"));
+        var expected = File.ReadAllText(Path.Join("Data", "hamlet_ending_new.txt"));
+        var actual = Patch.Apply(diff, original);
+        Assert.AreEqual(expected, actual);
     }
 
     [TestMethod]
@@ -58,7 +58,7 @@ public sealed class PatchTest
     private static async Task PatchApplyAsyncTest(int number)
     {
         var diff = File.ReadAllText(Path.Join("Data", $"hamlet_ending_{number}.patch"));
-        var expectedText = File.ReadAllText(Path.Join("Data", "hamlet_ending_new.txt"));
+        var expected = File.ReadAllText(Path.Join("Data", "hamlet_ending_new.txt"));
 
         using StreamReader inStream = new(Path.Join("Data", "hamlet_ending_old.txt"));
         using MemoryStream memStream = new();
@@ -70,8 +70,8 @@ public sealed class PatchTest
         memStream.Position = 0;
         using StreamReader outStreamReader = new(memStream);
 
-        var newText = await outStreamReader.ReadToEndAsync();
+        var actual = await outStreamReader.ReadToEndAsync();
 
-        Assert.AreEqual(expectedText, newText);
+        Assert.AreEqual(expected, actual);
     }
 }
