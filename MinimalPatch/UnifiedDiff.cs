@@ -27,7 +27,7 @@ internal sealed class UnifiedDiff
 
     public UnifiedDiff(ReadOnlySpan<char> text)
     {
-        uint i = 0;
+        int i = 0;
         Hunk? hunk = null;
 
         foreach (var range in text.Split('\n'))
@@ -38,9 +38,11 @@ internal sealed class UnifiedDiff
             {
                 if (!line.StartsWith(HeaderPrefix(i), StringComparison.Ordinal))
                 {
-                    throw new ArgumentException(
+                    throw new ArgumentException
+                    (
                         "UnifiedDiff text does not begin with the standard header",
-                        nameof(text));
+                        nameof(text)
+                    );
                 }
             }
             else if (line.StartsWith('@'))
@@ -55,9 +57,11 @@ internal sealed class UnifiedDiff
             {
                 if (hunk is null)
                 {
-                    throw new ArgumentException(
+                    throw new ArgumentException
+                    (
                         "Insert line operation found before hunk",
-                        nameof(text));
+                        nameof(text)
+                    );
                 }
                 hunk.LineOperations.Add(new LineOperation
                 {
@@ -71,9 +75,11 @@ internal sealed class UnifiedDiff
             }
             else
             {
-                throw new ArgumentException(
+                throw new ArgumentException
+                (
                     $"Line #{i} in unidiff text does not begin with a standard prefix",
-                    nameof(text));
+                    nameof(text)
+                );
             }
         }
 
@@ -95,13 +101,15 @@ internal sealed class UnifiedDiff
         }
         else
         {
-            throw new ArgumentException(
+            throw new ArgumentException
+            (
                 "Hunk header does not match count of line operations",
-                nameof(hunk));
+                nameof(hunk)
+            );
         }
     }
 
-    private static ReadOnlySpan<char> HeaderPrefix(uint lineNumber) => lineNumber switch
+    private static ReadOnlySpan<char> HeaderPrefix(int lineNumber) => lineNumber switch
     {
         1 => ['-', '-', '-'],
         2 => ['+', '+', '+'],

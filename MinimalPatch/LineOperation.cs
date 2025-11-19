@@ -24,8 +24,8 @@ internal sealed class LineOperation
     public required string Text { get; init; }
     public required Operation Operation { get; init; }
 
-    public bool IsALine() => Operation is Operation.Equal or Operation.Delete;
-    public bool IsBLine() => Operation is Operation.Equal or Operation.Insert;
+    public bool IsALine() => Operation != Operation.Insert;  // All A-Lines are either `Equal` or `Delete`
+    public bool IsBLine() => Operation != Operation.Delete;  // All B-Lines are either `Equal` or `Insert`
 
     public override string ToString() => $"{OpToChar(Operation)}{Text}";
 
