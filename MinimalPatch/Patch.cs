@@ -17,24 +17,31 @@ You should have received a copy of the GNU General Public License
 along with MinimalPatch. If not, see <https://www.gnu.org/licenses/>.
 */
 
+using System.Collections.Frozen;
 using System.Text;
 
 namespace MinimalPatch;
 
 public static class Patch
 {
-    public static async Task ApplyAsync(string diffText, StreamReader inStream, StreamWriter outStream)
+    /// <summary>
+    /// Apply a patch to an input stream and write the result to an output stream.
+    /// </summary>
+    /// <param name="diffText">Textual representation of the patch (unified diff format)</param>
+    /// <param name="input">Stream of text onto which the patch is applied.</param>
+    /// <param name="output">Stream onto which the patched text is written.</param>
+    /// <exception cref="InvalidDiffException">Thrown if the diff text cannot be parsed or if it is inconsistent with the input text.</exception>
+    /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
+    public static async Task ApplyAsync(string diffText, StreamReader input, StreamWriter output)
     {
-        var readTask = inStream.ReadLineAsync();
+        var readTask = input.ReadLineAsync();
         var writeTask = Task.CompletedTask;
-
-        UnifiedDiff diff = new(diffText);
-        var lineNumToOps = diff.GetLineNumberToOperationsDictionary();
-
+        var lineNumToOps = GetLineNumberToOperationsDictionary(diffText);
         int lineNumber = 0;
+
         while (await readTask is string text)
         {
-            readTask = inStream.ReadLineAsync();
+            readTask = input.ReadLineAsync();
             lineNumber++;
             if (lineNumToOps.TryGetValue(lineNumber, out var ops))
             {
@@ -44,37 +51,43 @@ public static class Patch
                     {
                         if (!string.Equals(text, op.Text, StringComparison.Ordinal))
                         {
-                            throw new ArgumentException(
+                            throw new InvalidDiffException(
                                 $"Line #{lineNumber} of text file does not match diff");
                         }
                     }
                     if (op.IsBLine())
                     {
                         await writeTask;
-                        writeTask = outStream.WriteLineAsync(op.Text);
+                        writeTask = output.WriteLineAsync(op.Text);
                     }
                 }
             }
             else
             {
                 await writeTask;
-                writeTask = outStream.WriteLineAsync(text);
+                writeTask = output.WriteLineAsync(text);
             }
         }
 
         await writeTask;
     }
 
-    public static string Apply(ReadOnlySpan<char> diffText, ReadOnlySpan<char> text)
+    /// <summary>
+    /// Apply a patch to an input text and return the result.
+    /// </summary>
+    /// <param name="diffText">Textual representation of the patch (unified diff format)</param>
+    /// <param name="input">Text onto which the patch is applied.</param>
+    /// <returns>The patched text.</returns>
+    /// <exception cref="InvalidDiffException">Thrown if the diff text cannot be parsed or if it is inconsistent with the input text.</exception>
+    /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
+    public static string Apply(ReadOnlySpan<char> diffText, ReadOnlySpan<char> input)
     {
         StringBuilder sb = new();
         Range currentRange = default;
-
-        UnifiedDiff diff = new(diffText);
-        var lineNumToOps = diff.GetLineNumberToOperationsDictionary();
-
+        var lineNumToOps = GetLineNumberToOperationsDictionary(diffText);
         int lineNumber = 0;
-        foreach (var range in text.Split('\n'))
+
+        foreach (var range in input.Split('\n'))
         {
             lineNumber++;
             if (lineNumToOps.TryGetValue(lineNumber, out var ops))
@@ -82,7 +95,7 @@ public static class Patch
                 if (!currentRange.Equals(default))
                 {
                     if (sb.Length > 0) sb.AppendLine();
-                    sb.Append(text[currentRange]);
+                    sb.Append(input[currentRange]);
                     currentRange = default;
                 }
 
@@ -90,10 +103,10 @@ public static class Patch
                 {
                     if (op.IsALine())
                     {
-                        if (!text[range].Equals(op.Text, StringComparison.Ordinal))
+                        if (!input[range].Equals(op.Text, StringComparison.Ordinal))
                         {
-                            throw new ArgumentException(
-                                $"Line #{lineNumber} of text file does not match diff");
+                            throw new InvalidDiffException(
+                                $"Line #{lineNumber} of input text does not match diff");
                         }
                     }
                     if (op.IsBLine())
@@ -114,9 +127,22 @@ public static class Patch
         if (!currentRange.Equals(default))
         {
             if (sb.Length > 0) sb.AppendLine();
-            sb.Append(text[currentRange]);
+            sb.Append(input[currentRange]);
         }
 
         return sb.ToString();
+    }
+
+    private static FrozenDictionary<int, List<LineOperation>> GetLineNumberToOperationsDictionary(ReadOnlySpan<char> diffText)
+    {
+        try
+        {
+            UnifiedDiff diff = new(diffText);
+            return diff.GetLineNumberToOperationsDictionary();
+        }
+        catch (System.Exception ex)
+        {
+            throw new InvalidDiffException("Error occurred while parsing diff text", ex);
+        }
     }
 }
