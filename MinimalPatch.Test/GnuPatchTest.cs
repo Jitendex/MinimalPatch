@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2025 Stephen Kraus
 
 This file is part of MinimalPatch.
@@ -17,10 +17,13 @@ You should have received a copy of the GNU General Public License
 along with MinimalPatch. If not, see <https://www.gnu.org/licenses/>.
 */
 
+using System.Diagnostics;
+
 namespace MinimalPatch.Test;
 
+[Ignore]
 [TestClass]
-public sealed class PatchTest
+public sealed class GnuPatchTest
 {
     [TestMethod]
     public void PatchApplyTest1()
@@ -36,10 +39,21 @@ public sealed class PatchTest
 
     private static void PatchApplyTest(int number)
     {
-        var diff = File.ReadAllText(Path.Join("Data", $"hamlet_ending_{number}.patch"));
-        var original = File.ReadAllText(Path.Join("Data", "hamlet_ending_old.txt"));
+        var p = new Process
+        {
+            StartInfo =
+            {
+                FileName = "patch",
+                WorkingDirectory = "Data",
+                Arguments = $"hamlet_ending_old.txt hamlet_ending_{number}.patch -o -",
+                RedirectStandardOutput = true,
+            }
+        };
+        p.Start();
+        p.WaitForExit();
+
+        var actual = p.StandardOutput.ReadToEnd();
         var expected = File.ReadAllText(Path.Join("Data", "hamlet_ending_new.txt"));
-        var actual = Patch.Apply(diff, original);
         Assert.AreEqual(expected, actual);
     }
 }
