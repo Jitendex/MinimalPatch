@@ -23,34 +23,34 @@ namespace MinimalPatch;
 
 public static class Patch
 {
-    public static async Task ApplyAsync(string diff, StreamReader inStream, StreamWriter outStream)
+    public static async Task ApplyAsync(string diffText, StreamReader inStream, StreamWriter outStream)
     {
         var readTask = inStream.ReadLineAsync();
         var writeTask = Task.CompletedTask;
 
-        Unidiff unidiff = new(diff);
-        var patchLineDictionary = unidiff.GetLineNumberToOperationsDictionary();
+        UnifiedDiff diff = new(diffText);
+        var lineNumToOps = diff.GetLineNumberToOperationsDictionary();
 
         int lineNumber = 1;
         while (await readTask is string text)
         {
             readTask = inStream.ReadLineAsync();
-            if (patchLineDictionary.TryGetValue(lineNumber, out var lineOps))
+            if (lineNumToOps.TryGetValue(lineNumber, out var ops))
             {
-                foreach (var lineOp in lineOps)
+                foreach (var op in ops)
                 {
-                    if (lineOp.IsALine())
+                    if (op.IsALine())
                     {
-                        if (!string.Equals(text, lineOp.Line, StringComparison.Ordinal))
+                        if (!string.Equals(text, op.Text, StringComparison.Ordinal))
                         {
                             throw new ArgumentException(
                                 $"Line #{lineNumber} of text file does not match diff");
                         }
                     }
-                    if (lineOp.IsBLine())
+                    if (op.IsBLine())
                     {
                         await writeTask;
-                        writeTask = outStream.WriteLineAsync(lineOp.Line);
+                        writeTask = outStream.WriteLineAsync(op.Text);
                     }
                 }
             }
@@ -65,13 +65,13 @@ public static class Patch
         await writeTask;
     }
 
-    public static string Apply(ReadOnlySpan<char> diff, ReadOnlySpan<char> text)
+    public static string Apply(ReadOnlySpan<char> diffText, ReadOnlySpan<char> text)
     {
         StringBuilder sb = new();
         Range currentRange = default;
 
-        Unidiff unidiff = new(diff);
-        var lineNumToOps = unidiff.GetLineNumberToOperationsDictionary();
+        UnifiedDiff diff = new(diffText);
+        var lineNumToOps = diff.GetLineNumberToOperationsDictionary();
 
         int lineNumber = 0;
         foreach (var range in text.Split('\n'))
@@ -90,7 +90,7 @@ public static class Patch
                 {
                     if (op.IsALine())
                     {
-                        if (!text[range].Equals(op.Line, StringComparison.Ordinal))
+                        if (!text[range].Equals(op.Text, StringComparison.Ordinal))
                         {
                             throw new ArgumentException(
                                 $"Line #{lineNumber} of text file does not match diff");
@@ -99,7 +99,7 @@ public static class Patch
                     if (op.IsBLine())
                     {
                         if (sb.Length > 0) sb.AppendLine();
-                        sb.Append(op.Line);
+                        sb.Append(op.Text);
                     }
                 }
             }

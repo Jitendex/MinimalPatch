@@ -21,13 +21,13 @@ namespace MinimalPatch;
 
 internal sealed class LineOperation
 {
-    public required string Line { get; init; }
+    public required string Text { get; init; }
     public required Operation Operation { get; init; }
 
     public bool IsALine() => Operation is Operation.Equal or Operation.Delete;
     public bool IsBLine() => Operation is Operation.Equal or Operation.Insert;
 
-    public override string ToString() => $"{OpToChar(Operation)}{Line}";
+    public override string ToString() => $"{OpToChar(Operation)}{Text}";
 
     private static char OpToChar(Operation op) => op switch
     {

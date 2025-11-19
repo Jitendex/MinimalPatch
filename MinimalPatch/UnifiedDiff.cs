@@ -21,11 +21,11 @@ using System.Collections.Frozen;
 
 namespace MinimalPatch;
 
-internal sealed class Unidiff
+internal sealed class UnifiedDiff
 {
     private readonly List<Hunk> _hunks = [];
 
-    public Unidiff(ReadOnlySpan<char> text)
+    public UnifiedDiff(ReadOnlySpan<char> text)
     {
         uint i = 0;
         Hunk? hunk = null;
@@ -39,7 +39,7 @@ internal sealed class Unidiff
                 if (!line.StartsWith(HeaderPrefix(i), StringComparison.Ordinal))
                 {
                     throw new ArgumentException(
-                        "Unidiff text does not begin with the standard header",
+                        "UnifiedDiff text does not begin with the standard header",
                         nameof(text));
                 }
             }
@@ -61,7 +61,7 @@ internal sealed class Unidiff
                 }
                 hunk.LineOperations.Add(new LineOperation
                 {
-                    Line = line[1..].ToString(),
+                    Text = line[1..].ToString(),
                     Operation = operation,
                 });
             }
