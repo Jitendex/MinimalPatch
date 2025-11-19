@@ -65,7 +65,7 @@ internal sealed class UnifiedDiff
                 }
                 hunk.LineOperations.Add(new LineOperation
                 {
-                    Text = line[1..].ToString(),
+                    Range = new Range(range.Start.Value + 1, range.End),
                     Operation = operation,
                 });
             }

@@ -21,19 +21,8 @@ namespace MinimalPatch.Internal;
 
 internal sealed class LineOperation
 {
-    public required string Text { get; init; }
+    public required Range Range { get; init; }
     public required Operation Operation { get; init; }
-
     public bool IsALine() => Operation != Operation.Insert;  // All A-Lines are either `Equal` or `Delete`
     public bool IsBLine() => Operation != Operation.Delete;  // All B-Lines are either `Equal` or `Insert`
-
-    public override string ToString() => $"{OpToChar(Operation)}{Text}";
-
-    private static char OpToChar(Operation op) => op switch
-    {
-        Operation.Equal => ' ',
-        Operation.Delete => '-',
-        Operation.Insert => '+',
-        _ => throw new ArgumentOutOfRangeException(nameof(op))
-    };
 }

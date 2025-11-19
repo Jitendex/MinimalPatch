@@ -47,20 +47,19 @@ public static class Patch
             {
                 if (!currentRange.Equals(default))
                 {
-                    sb.AppendLineIfNonEmpty();
-                    sb.Append(originalText[currentRange]);
+                    sb.AppendOutputLine(originalText[currentRange]);
                     currentRange = default;
                 }
                 foreach (var operation in operations)
                 {
+                    var operationText = patchText[operation.Range];
                     if (operation.IsALine())
                     {
-                        ValidateALineText(originalText[range], operation.Text, lineNumber);
+                        ValidateALineText(originalText[range], operationText, lineNumber);
                     }
                     if (operation.IsBLine())
                     {
-                        sb.AppendLineIfNonEmpty();
-                        sb.Append(operation.Text);
+                        sb.AppendOutputLine(operationText);
                     }
                 }
             }
@@ -74,19 +73,19 @@ public static class Patch
 
         if (!currentRange.Equals(default))
         {
-            sb.AppendLineIfNonEmpty();
-            sb.Append(originalText[currentRange]);
+            sb.AppendOutputLine(originalText[currentRange]);
         }
 
         return sb.ToString();
     }
 
-    private static void AppendLineIfNonEmpty(this StringBuilder sb)
+    private static void AppendOutputLine(this StringBuilder sb, ReadOnlySpan<char> line)
     {
         if (sb.Length > 0)
         {
             sb.AppendLine();
         }
+        sb.Append(line);
     }
 
     private static FrozenDictionary<int, List<LineOperation>> GetLineNumberToOperationsDictionary(ReadOnlySpan<char> patchText)

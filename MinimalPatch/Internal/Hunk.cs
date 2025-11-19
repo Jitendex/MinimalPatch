@@ -103,16 +103,4 @@ internal sealed class Hunk
         }
         return lineNumToOps;
     }
-
-    public override string ToString()
-    {
-        StringBuilder sb = new();
-        var header = $"@@ -{StartA},{LengthA} +{StartB},{LengthB} @@";
-        sb.AppendLine(header);
-        foreach (var lineOp in LineOperations)
-        {
-            sb.AppendLine(lineOp.ToString());
-        }
-        return sb.ToString();
-    }
 }
