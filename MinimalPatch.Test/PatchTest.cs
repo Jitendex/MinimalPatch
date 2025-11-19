@@ -36,7 +36,7 @@ public sealed class PatchTest
 
     private static void PatchApplyTest(int number)
     {
-        var diff = File.ReadAllText(Path.Join("Data", $"hamlet_ending{number}.patch"));
+        var diff = File.ReadAllText(Path.Join("Data", $"hamlet_ending_{number}.patch"));
         var originalText = File.ReadAllText(Path.Join("Data", "hamlet_ending_old.txt"));
         var expectedText = File.ReadAllText(Path.Join("Data", "hamlet_ending_new.txt"));
         var newText = Patch.Apply(diff, originalText);
@@ -57,7 +57,7 @@ public sealed class PatchTest
 
     private static async Task PatchApplyAsyncTest(int number)
     {
-        var diff = File.ReadAllText(Path.Join("Data", $"hamlet_ending{number}.patch"));
+        var diff = File.ReadAllText(Path.Join("Data", $"hamlet_ending_{number}.patch"));
         var expectedText = File.ReadAllText(Path.Join("Data", "hamlet_ending_new.txt"));
 
         using StreamReader inStream = new(Path.Join("Data", "hamlet_ending_old.txt"));
