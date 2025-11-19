@@ -25,35 +25,56 @@ namespace MinimalPatch.Test;
 [TestClass]
 public sealed class GnuPatchTest
 {
+    private static readonly Random _random = new();
+
     [TestMethod]
     public void PatchApplyTest1()
     {
-        PatchApplyTest(1);
+        PatchApplyTest("ending", 1);
     }
 
     [TestMethod]
     public void PatchApplyTest2()
     {
-        PatchApplyTest(2);
+        PatchApplyTest("ending", 2);
     }
 
-    private static void PatchApplyTest(int number)
+    [TestMethod]
+    public void PatchApplyTest3()
     {
+        PatchApplyTest("act1", 1);
+    }
+
+    [TestMethod]
+    public void PatchApplyTest4()
+    {
+        PatchApplyTest("full", 1);
+    }
+
+    private static void PatchApplyTest(string size, int number)
+    {
+        var tmpfile = $"/tmp/hamlet_{_random.Next()}.txt";
         using var process = new Process
         {
             StartInfo =
             {
                 FileName = "patch",
                 WorkingDirectory = "Data",
-                Arguments = $"--quiet hamlet_ending_old.txt hamlet_ending_{number}.patch -o -",
+                Arguments = $"--quiet hamlet_{size}_old.txt hamlet_{size}_{number}.patch -o {tmpfile}",
                 RedirectStandardOutput = true,
             }
         };
         process.Start();
         process.WaitForExit();
 
-        var actual = process.StandardOutput.ReadToEnd();
-        var expected = File.ReadAllText(Path.Join("Data", "hamlet_ending_new.txt"));
+        var actual = File.ReadAllText(tmpfile);
+        var expected = File.ReadAllText(Path.Join("Data", $"hamlet_{size}_new.txt"));
+
+        if (File.Exists(tmpfile))
+        {
+            File.Delete(tmpfile);
+        }
+
         Assert.AreEqual(expected, actual);
     }
 }

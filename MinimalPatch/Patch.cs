@@ -25,50 +25,6 @@ namespace MinimalPatch;
 public static class Patch
 {
     /// <summary>
-    /// Apply a patch to an input stream and write the result to an output stream.
-    /// </summary>
-    /// <param name="diffText">Textual representation of the patch (unified diff format)</param>
-    /// <param name="input">Stream of text onto which the patch is applied.</param>
-    /// <param name="output">Stream onto which the patched text is written.</param>
-    /// <exception cref="InvalidDiffException">Thrown if the diff text cannot be parsed or if it is inconsistent with the input text.</exception>
-    /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
-    public static async Task ApplyAsync(string diffText, StreamReader input, StreamWriter output)
-    {
-        var readTask = input.ReadLineAsync();
-        var writeTask = Task.CompletedTask;
-        var lineNumToOps = GetLineNumberToOperationsDictionary(diffText);
-        int lineNumber = 0;
-
-        while (await readTask is string text)
-        {
-            readTask = input.ReadLineAsync();
-            lineNumber++;
-            if (lineNumToOps.TryGetValue(lineNumber, out var ops))
-            {
-                foreach (var op in ops)
-                {
-                    if (op.IsALine())
-                    {
-                        ValidateALineText(text, op.Text, lineNumber);
-                    }
-                    if (op.IsBLine())
-                    {
-                        await writeTask;
-                        writeTask = output.WriteLineAsync(op.Text);
-                    }
-                }
-            }
-            else
-            {
-                await writeTask;
-                writeTask = output.WriteLineAsync(text);
-            }
-        }
-
-        await writeTask;
-    }
-
-    /// <summary>
     /// Apply a patch to an input text and return the result.
     /// </summary>
     /// <param name="diffText">Textual representation of the patch (unified diff format)</param>

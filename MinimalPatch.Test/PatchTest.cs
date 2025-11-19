@@ -25,20 +25,32 @@ public sealed class PatchTest
     [TestMethod]
     public void PatchApplyTest1()
     {
-        PatchApplyTest(1);
+        PatchApplyTest("ending", 1);
     }
 
     [TestMethod]
     public void PatchApplyTest2()
     {
-        PatchApplyTest(2);
+        PatchApplyTest("ending", 2);
     }
 
-    private static void PatchApplyTest(int number)
+    [TestMethod]
+    public void PatchApplyTest3()
     {
-        var diff = File.ReadAllText(Path.Join("Data", $"hamlet_ending_{number}.patch"));
-        var original = File.ReadAllText(Path.Join("Data", "hamlet_ending_old.txt"));
-        var expected = File.ReadAllText(Path.Join("Data", "hamlet_ending_new.txt"));
+        PatchApplyTest("act1", 1);
+    }
+
+    [TestMethod]
+    public void PatchApplyTest4()
+    {
+        PatchApplyTest("full", 1);
+    }
+
+    private static void PatchApplyTest(string size, int number)
+    {
+        var diff = File.ReadAllText(Path.Join("Data", $"hamlet_{size}_{number}.patch"));
+        var original = File.ReadAllText(Path.Join("Data", $"hamlet_{size}_old.txt"));
+        var expected = File.ReadAllText(Path.Join("Data", $"hamlet_{size}_new.txt"));
         var actual = Patch.Apply(diff, original);
         Assert.AreEqual(expected, actual);
     }

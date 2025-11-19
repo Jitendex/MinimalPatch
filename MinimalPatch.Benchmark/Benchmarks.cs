@@ -25,7 +25,6 @@ namespace MinimalPatch.Benchmark;
 public class Benchmarks
 {
     private readonly PatchTest _patchTest = new();
-    private readonly PatchAsyncTest _patchAsyncTest = new();
     private readonly GnuPatchTest _gnuPatchTest = new();
 
     [Benchmark]
@@ -41,15 +40,15 @@ public class Benchmarks
     }
 
     [Benchmark]
-    public async Task PatchApplyAsync1()
+    public void PatchApply3()
     {
-        await _patchAsyncTest.PatchApplyAsyncTest1();
+        _patchTest.PatchApplyTest3();
     }
 
     [Benchmark]
-    public async Task PatchApplyAsync2()
+    public void PatchApply4()
     {
-        await _patchAsyncTest.PatchApplyAsyncTest2();
+        _patchTest.PatchApplyTest4();
     }
 
     [Benchmark]
@@ -62,5 +61,17 @@ public class Benchmarks
     public void GnuPatchApply2()
     {
         _gnuPatchTest.PatchApplyTest2();
+    }
+
+    [Benchmark]
+    public void GnuPatchApply3()
+    {
+        _gnuPatchTest.PatchApplyTest3();
+    }
+
+    [Benchmark]
+    public void GnuPatchApply4()
+    {
+        _gnuPatchTest.PatchApplyTest4();
     }
 }
