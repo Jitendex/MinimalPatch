@@ -140,7 +140,7 @@ public static class Patch
             UnifiedDiff diff = new(diffText);
             return diff.GetLineNumberToOperationsDictionary();
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             throw new InvalidDiffException("Error occurred while parsing diff text", ex);
         }
