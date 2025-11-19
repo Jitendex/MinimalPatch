@@ -21,6 +21,6 @@ namespace MinimalPatch.Internal;
 
 internal readonly record struct LineOperation(Range Range, Operation Operation)
 {
-    public bool IsALine() => Operation != Operation.Insert;  // All A-Lines are either `Equal` or `Delete`
-    public bool IsBLine() => Operation != Operation.Delete;  // All B-Lines are either `Equal` or `Insert`
+    public bool IsOriginalLine() => Operation.IsFileA();
+    public bool IsOutputLine() => Operation.IsFileB();
 }

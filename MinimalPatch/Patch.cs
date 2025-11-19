@@ -37,13 +37,13 @@ public static class Patch
     {
         StringBuilder sb = new();
         Range currentRange = default;
-        var lineNumberToOperations = GetLineNumberToOperationsDictionary(patchText);
+        var lineOperations = GetLineOperations(patchText);
         int lineNumber = 0;
 
         foreach (var range in originalText.Split('\n'))
         {
             lineNumber++;
-            if (lineNumberToOperations.TryGetValue(lineNumber, out var operations))
+            if (lineOperations.TryGetValue(lineNumber, out var operations))
             {
                 if (!currentRange.Equals(default))
                 {
@@ -53,11 +53,11 @@ public static class Patch
                 foreach (var operation in operations)
                 {
                     var operationText = patchText[operation.Range];
-                    if (operation.IsALine())
+                    if (operation.IsOriginalLine())
                     {
-                        ValidateALineText(originalText[range], operationText, lineNumber);
+                        ValidateOriginalLineText(operationText, originalText[range], lineNumber);
                     }
-                    if (operation.IsBLine())
+                    if (operation.IsOutputLine())
                     {
                         sb.AppendOutputLine(operationText);
                     }
@@ -88,12 +88,12 @@ public static class Patch
         sb.Append(line);
     }
 
-    private static FrozenDictionary<int, List<LineOperation>> GetLineNumberToOperationsDictionary(ReadOnlySpan<char> patchText)
+    private static FrozenDictionary<int, List<LineOperation>> GetLineOperations(ReadOnlySpan<char> patchText)
     {
         try
         {
             UnifiedDiff diff = new(patchText);
-            return diff.GetLineNumberToOperationsDictionary();
+            return diff.GetLineOperations();
         }
         catch (Exception ex)
         {
@@ -101,9 +101,9 @@ public static class Patch
         }
     }
 
-    private static void ValidateALineText(ReadOnlySpan<char> sourceText, ReadOnlySpan<char> aLineText, int lineNumber)
+    private static void ValidateOriginalLineText(ReadOnlySpan<char> expected, ReadOnlySpan<char> actual, int lineNumber)
     {
-        if (!sourceText.Equals(aLineText, StringComparison.Ordinal))
+        if (!expected.Equals(actual, StringComparison.Ordinal))
         {
             throw new InvalidDiffException($"Line #{lineNumber} of original text does not match the corresponding line in the patch");
         }

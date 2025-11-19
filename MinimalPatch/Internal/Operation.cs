@@ -25,3 +25,12 @@ internal enum Operation
     Delete,
     Insert,
 }
+
+internal static class OperationExtensions
+{
+    // All lines in file A are either `Equal` or `Delete`
+    public static bool IsFileA(this Operation operation) => operation != Operation.Insert;
+
+    // All lines in file B are either `Equal` or `Insert`
+    public static bool IsFileB(this Operation operation) => operation != Operation.Delete;
+}

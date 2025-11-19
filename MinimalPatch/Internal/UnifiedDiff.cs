@@ -27,16 +27,17 @@ internal sealed class UnifiedDiff
 
     public UnifiedDiff(ReadOnlySpan<char> text)
     {
-        int i = 0;
+        int diffLineNum = 0;
+        int origLineNum = 0;
         Hunk? hunk = null;
 
         foreach (var range in text.Split('\n'))
         {
-            i++;
+            diffLineNum++;
             var line = text[range];
-            if (i < 3)
+            if (diffLineNum < 3)
             {
-                if (!line.StartsWith(HeaderPrefix(i), StringComparison.Ordinal))
+                if (!line.StartsWith(HeaderPrefix(diffLineNum), StringComparison.Ordinal))
                 {
                     throw new ArgumentException
                     (
@@ -52,6 +53,7 @@ internal sealed class UnifiedDiff
                     AddHunk(hunk);
                 }
                 hunk = new Hunk(line);
+                origLineNum = hunk.StartA - 1;
             }
             else if (line.Length > 0 && GetLineOperation(line[0]) is Operation operation)
             {
@@ -63,7 +65,12 @@ internal sealed class UnifiedDiff
                         nameof(text)
                     );
                 }
-                hunk.LineOperations.Add(new LineOperation
+                if (operation.IsFileA())
+                {
+                    origLineNum++;
+                }
+                int idx = int.Max(origLineNum, hunk.StartA);
+                hunk.LineOperations[idx].Add(new LineOperation
                 {
                     Range = new Range(range.Start.Value + 1, range.End),
                     Operation = operation,
@@ -77,7 +84,7 @@ internal sealed class UnifiedDiff
             {
                 throw new ArgumentException
                 (
-                    $"Line #{i} in unidiff text does not begin with a standard prefix",
+                    $"Line #{diffLineNum} in unidiff text does not begin with a standard prefix",
                     nameof(text)
                 );
             }
@@ -89,8 +96,8 @@ internal sealed class UnifiedDiff
         }
     }
 
-    public FrozenDictionary<int, List<LineOperation>> GetLineNumberToOperationsDictionary() => _hunks
-        .SelectMany(static h => h.GetLineNumberToOperationsDictionary())
+    public FrozenDictionary<int, List<LineOperation>> GetLineOperations() => _hunks
+        .SelectMany(static h => h.LineOperations)
         .ToFrozenDictionary();
 
     private void AddHunk(Hunk hunk)

@@ -25,7 +25,7 @@ internal sealed class Hunk
     public int LengthA { get; }
     public int StartB { get; }
     public int LengthB { get; }
-    public List<LineOperation> LineOperations { get; }
+    public Dictionary<int, List<LineOperation>> LineOperations { get; }
 
     public Hunk(ReadOnlySpan<char> header)
     {
@@ -50,7 +50,9 @@ internal sealed class Hunk
                 break;
             }
         }
-        LineOperations = new(int.Max(LengthA, LengthB));
+        LineOperations = Enumerable.Range(StartA, LengthA)
+            .Select(static x => new KeyValuePair<int, List<LineOperation>>(x, []))
+            .ToDictionary();
     }
 
     private static (int, int) GetStartAndLength(ReadOnlySpan<char> text)
@@ -69,37 +71,17 @@ internal sealed class Hunk
     }
 
     public bool LengthsAreConsistent()
-        => LengthA == LineOperations.Where(static l => l.IsALine()).Count()
-        && LengthB == LineOperations.Where(static l => l.IsBLine()).Count();
-
-    public Dictionary<int, List<LineOperation>> GetLineNumberToOperationsDictionary()
     {
-        var lineNumToOps = new Dictionary<int, List<LineOperation>>(LengthA)
+        int aCount = 0;
+        int bCount = 0;
+        foreach (var opList in LineOperations.Values)
         {
-            [StartA] = []
-        };
-        int lineNumber = StartA - 1;
-
-        foreach (var lineOp in LineOperations)
-        {
-            if (lineOp.IsALine())
+            foreach (var op in opList)
             {
-                lineNumber++;
-                if (lineNumToOps.TryGetValue(lineNumber, out var ops))
-                {
-                    ops.Add(lineOp);
-                }
-                else
-                {
-                    lineNumToOps[lineNumber] = [lineOp];
-                }
-            }
-            else
-            {
-                int effectiveLineNum = int.Max(lineNumber, StartA);
-                lineNumToOps[effectiveLineNum].Add(lineOp);
+                if (op.IsOriginalLine()) aCount++;
+                if (op.IsOutputLine()) bCount++;
             }
         }
-        return lineNumToOps;
+        return LengthA == aCount && LengthB == bCount;
     }
 }
