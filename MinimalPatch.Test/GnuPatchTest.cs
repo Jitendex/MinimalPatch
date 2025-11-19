@@ -39,7 +39,7 @@ public sealed class GnuPatchTest
 
     private static void PatchApplyTest(int number)
     {
-        var p = new Process
+        using var process = new Process
         {
             StartInfo =
             {
@@ -49,10 +49,10 @@ public sealed class GnuPatchTest
                 RedirectStandardOutput = true,
             }
         };
-        p.Start();
-        p.WaitForExit();
+        process.Start();
+        process.WaitForExit();
 
-        var actual = p.StandardOutput.ReadToEnd();
+        var actual = process.StandardOutput.ReadToEnd();
         var expected = File.ReadAllText(Path.Join("Data", "hamlet_ending_new.txt"));
         Assert.AreEqual(expected, actual);
     }
