@@ -45,7 +45,7 @@ public sealed class GnuPatchTest
             {
                 FileName = "patch",
                 WorkingDirectory = "Data",
-                Arguments = $"hamlet_ending_old.txt hamlet_ending_{number}.patch -o -",
+                Arguments = $"--quiet hamlet_ending_old.txt hamlet_ending_{number}.patch -o -",
                 RedirectStandardOutput = true,
             }
         };
