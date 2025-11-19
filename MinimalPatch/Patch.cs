@@ -49,11 +49,7 @@ public static class Patch
                 {
                     if (op.IsALine())
                     {
-                        if (!string.Equals(text, op.Text, StringComparison.Ordinal))
-                        {
-                            throw new InvalidDiffException(
-                                $"Line #{lineNumber} of text file does not match diff");
-                        }
+                        ValidateALineText(text, op.Text, lineNumber);
                     }
                     if (op.IsBLine())
                     {
@@ -98,16 +94,11 @@ public static class Patch
                     sb.Append(input[currentRange]);
                     currentRange = default;
                 }
-
                 foreach (var op in ops)
                 {
                     if (op.IsALine())
                     {
-                        if (!input[range].Equals(op.Text, StringComparison.Ordinal))
-                        {
-                            throw new InvalidDiffException(
-                                $"Line #{lineNumber} of input text does not match diff");
-                        }
+                        ValidateALineText(input[range], op.Text, lineNumber);
                     }
                     if (op.IsBLine())
                     {
@@ -143,6 +134,14 @@ public static class Patch
         catch (Exception ex)
         {
             throw new InvalidDiffException("Error occurred while parsing diff text", ex);
+        }
+    }
+
+    private static void ValidateALineText(ReadOnlySpan<char> sourceText, ReadOnlySpan<char> aLineText, int lineNumber)
+    {
+        if (!sourceText.Equals(aLineText, StringComparison.Ordinal))
+        {
+            throw new InvalidDiffException($"Line #{lineNumber} of input text does not match diff");
         }
     }
 }
