@@ -25,8 +25,6 @@ namespace MinimalPatch.Test;
 [TestClass]
 public sealed class GnuPatchTest
 {
-    private static readonly Random _random = new();
-
     [TestMethod]
     public void PatchApplyTest1()
     {
@@ -53,7 +51,7 @@ public sealed class GnuPatchTest
 
     private static void PatchApplyTest(string size, int number)
     {
-        var tmpfile = $"/tmp/hamlet_{_random.Next()}.txt";
+        var tmpfile = $"/tmp/hamlet-{Guid.NewGuid()}.txt";
         using var process = new Process
         {
             StartInfo =
