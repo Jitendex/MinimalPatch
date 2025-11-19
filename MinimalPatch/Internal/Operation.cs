@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with MinimalPatch. If not, see <https://www.gnu.org/licenses/>.
 */
 
-namespace MinimalPatch;
+namespace MinimalPatch.Internal;
 
 internal enum Operation
 {

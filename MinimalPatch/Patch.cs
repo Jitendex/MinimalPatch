@@ -19,6 +19,7 @@ along with MinimalPatch. If not, see <https://www.gnu.org/licenses/>.
 
 using System.Collections.Frozen;
 using System.Text;
+using MinimalPatch.Internal;
 
 namespace MinimalPatch;
 

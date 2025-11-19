@@ -19,7 +19,7 @@ along with MinimalPatch. If not, see <https://www.gnu.org/licenses/>.
 
 using System.Collections.Frozen;
 
-namespace MinimalPatch;
+namespace MinimalPatch.Internal;
 
 internal sealed class UnifiedDiff
 {
