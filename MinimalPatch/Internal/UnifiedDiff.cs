@@ -25,6 +25,9 @@ internal sealed class UnifiedDiff
 {
     private readonly List<Hunk> _hunks = [];
 
+    public FrozenDictionary<int, List<LineOperation>> GetLineOperations()
+        => _hunks.SelectMany(static h => h.LineOperations).ToFrozenDictionary();
+
     public UnifiedDiff(ReadOnlySpan<char> text)
     {
         int diffLineNum = 0;
@@ -35,46 +38,20 @@ internal sealed class UnifiedDiff
         {
             diffLineNum++;
             var line = text[range];
+
             if (diffLineNum < 3)
             {
-                if (!line.StartsWith(HeaderPrefix(diffLineNum), StringComparison.Ordinal))
-                {
-                    throw new ArgumentException
-                    (
-                        "UnifiedDiff text does not begin with the standard header",
-                        nameof(text)
-                    );
-                }
+                ValidateHeaderLine(line, diffLineNum);
             }
             else if (line.StartsWith('@'))
             {
-                if (hunk is not null)
-                {
-                    AddHunk(hunk);
-                }
+                AddHunk(hunk);
                 hunk = new Hunk(line);
                 origLineNum = hunk.Header.StartA - 1;
             }
             else if (line.Length > 0 && GetLineOperation(line[0]) is Operation operation)
             {
-                if (hunk is null)
-                {
-                    throw new ArgumentException
-                    (
-                        "Line operation found before any hunks",
-                        nameof(text)
-                    );
-                }
-                if (operation.IsFileA())
-                {
-                    origLineNum++;
-                }
-                int idx = int.Max(origLineNum, hunk.Header.StartA);
-                hunk.LineOperations[idx].Add(new LineOperation
-                {
-                    Range = new Range(range.Start.Value + 1, range.End),
-                    Operation = operation,
-                });
+                AddLineOperation(hunk, operation, range, ref origLineNum);
             }
             else if (range.Start.Equals(text.Length) && range.End.Equals(text.Length))
             {
@@ -82,36 +59,18 @@ internal sealed class UnifiedDiff
             }
             else
             {
-                throw new ArgumentException
-                (
-                    $"Line #{diffLineNum} in unidiff text does not begin with a standard prefix",
-                    nameof(text)
-                );
+                throw new InvalidDiffException($"Line #{diffLineNum} in unidiff text does not begin with a standard prefix");
             }
         }
 
-        if (hunk is not null)
-        {
-            AddHunk(hunk);
-        }
+        AddHunk(hunk);
     }
 
-    public FrozenDictionary<int, List<LineOperation>> GetLineOperations()
-        => _hunks.SelectMany(static h => h.LineOperations).ToFrozenDictionary();
-
-    private void AddHunk(Hunk hunk)
+    private static void ValidateHeaderLine(ReadOnlySpan<char> line, int diffLineNum)
     {
-        if (hunk.LengthsAreConsistent())
+        if (!line.StartsWith(HeaderPrefix(diffLineNum), StringComparison.Ordinal))
         {
-            _hunks.Add(hunk);
-        }
-        else
-        {
-            throw new ArgumentException
-            (
-                "Hunk header does not match count of line operations",
-                nameof(hunk)
-            );
+            throw new InvalidDiffException("UnifiedDiff text does not begin with the standard header");
         }
     }
 
@@ -122,6 +81,22 @@ internal sealed class UnifiedDiff
         _ => throw new ArgumentOutOfRangeException(nameof(lineNumber))
     };
 
+    private void AddHunk(Hunk? hunk)
+    {
+        if (hunk is null)
+        {
+            return;
+        }
+        if (hunk.LengthsAreConsistent())
+        {
+            _hunks.Add(hunk);
+        }
+        else
+        {
+            throw new InvalidDiffException("Hunk header does not match count of line operations");
+        }
+    }
+
     private static Operation? GetLineOperation(char prefix) => prefix switch
     {
         ' ' => Operation.Equal,
@@ -129,4 +104,27 @@ internal sealed class UnifiedDiff
         '+' => Operation.Insert,
         _ => null
     };
+
+    private static void AddLineOperation(Hunk? hunk, Operation operation, Range range, ref int origLineNum)
+    {
+        if (hunk is null)
+        {
+            throw new InvalidDiffException("Line operation found before any hunks");
+        }
+        if (operation.IsFileA())
+        {
+            origLineNum++;
+        }
+
+        // origLineNum is initialized to StartA - 1.
+        // If the first operations are inserts, then origLineNum
+        // will be less than StartA and therefore out of range.
+        int idx = int.Max(origLineNum, hunk.Header.StartA);
+
+        hunk.LineOperations[idx].Add(new LineOperation
+        {
+            Operation = operation,
+            Range = new Range(range.Start.Value + 1, range.End),
+        });
+    }
 }
