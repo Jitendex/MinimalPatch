@@ -24,3 +24,19 @@ internal readonly record struct LineOperation(Range Range, Operation Operation)
     public bool IsOriginalLine() => Operation.IsFileA();
     public bool IsOutputLine() => Operation.IsFileB();
 }
+
+internal enum Operation : byte
+{
+    Equal,
+    Delete,
+    Insert,
+}
+
+internal static class OperationExtensions
+{
+    // All lines in file A are either `Equal` or `Delete`
+    public static bool IsFileA(this Operation operation) => operation != Operation.Insert;
+
+    // All lines in file B are either `Equal` or `Insert`
+    public static bool IsFileB(this Operation operation) => operation != Operation.Delete;
+}
