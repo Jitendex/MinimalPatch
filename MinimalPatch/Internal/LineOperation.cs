@@ -19,7 +19,7 @@ along with MinimalPatch. If not, see <https://www.gnu.org/licenses/>.
 
 namespace MinimalPatch.Internal;
 
-internal readonly record struct LineOperation(Range Range, Operation Operation)
+internal readonly record struct LineOperation(Operation Operation, Range Range)
 {
     public bool IsOriginalLine() => Operation.IsFileA();
     public bool IsOutputLine() => Operation.IsFileB();

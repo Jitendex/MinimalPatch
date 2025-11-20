@@ -44,16 +44,16 @@ internal sealed class Hunk
 
     public bool LengthsAreConsistent()
     {
-        int aCount = 0;
-        int bCount = 0;
-        foreach (var opList in LineOperations.Values)
+        int lengthA = 0;
+        int lengthB = 0;
+        foreach (var operations in LineOperations.Values)
         {
-            foreach (var op in opList)
+            foreach (var operation in operations)
             {
-                if (op.IsOriginalLine()) aCount++;
-                if (op.IsOutputLine()) bCount++;
+                if (operation.IsOriginalLine()) lengthA++;
+                if (operation.IsOutputLine()) lengthB++;
             }
         }
-        return Header.LengthA == aCount && Header.LengthB == bCount;
+        return Header.LengthA == lengthA && Header.LengthB == lengthB;
     }
 }
