@@ -96,9 +96,8 @@ internal sealed class UnifiedDiff
         }
     }
 
-    public FrozenDictionary<int, List<LineOperation>> GetLineOperations() => _hunks
-        .SelectMany(static h => h.LineOperations)
-        .ToFrozenDictionary();
+    public FrozenDictionary<int, List<LineOperation>> GetLineOperations()
+        => _hunks.SelectMany(static h => h.LineOperations).ToFrozenDictionary();
 
     private void AddHunk(Hunk hunk)
     {
