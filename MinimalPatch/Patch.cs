@@ -18,7 +18,6 @@ along with MinimalPatch. If not, see <https://www.gnu.org/licenses/>.
 */
 
 using System.Collections.Frozen;
-using System.Text;
 using MinimalPatch.Internal;
 
 namespace MinimalPatch;
@@ -30,15 +29,30 @@ public static class Patch
     /// </summary>
     /// <param name="patchText">Textual representation of the patch (unified diff format)</param>
     /// <param name="originalText">Text onto which the patch is applied.</param>
-    /// <returns>The patched text.</returns>
     /// <exception cref="InvalidDiffException">Thrown if the diff text cannot be parsed or if it is inconsistent with the input text.</exception>
     /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
-    public static string Apply(ReadOnlySpan<char> patchText, ReadOnlySpan<char> originalText)
+    public static ReadOnlySpan<char> Apply(ReadOnlySpan<char> patchText, ReadOnlySpan<char> originalText)
     {
-        StringBuilder sb = new(capacity: 0, maxCapacity: patchText.Length + originalText.Length);
+        var newText = new char[patchText.Length + originalText.Length];
+        var length = Apply(patchText, originalText, newText);
+        return newText.AsSpan(0, length);
+    }
+
+    /// <summary>
+    /// Fill a text buffer with the result of a patch applied to an input text.
+    /// </summary>
+    /// <param name="patchText">Textual representation of the patch (unified diff format)</param>
+    /// <param name="originalText">Text onto which the patch is applied.</param>
+    /// <param name="newText">Buffer containing the patched text.</param>
+    /// <returns>The length of the patched text.</returns>
+    /// <exception cref="InvalidDiffException">Thrown if the diff text cannot be parsed or if it is inconsistent with the input text.</exception>
+    /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
+    public static int Apply(ReadOnlySpan<char> patchText, ReadOnlySpan<char> originalText, Span<char> newText)
+    {
         Range currentRange = default;
         var lineOperations = GetLineOperations(patchText);
         int lineNumber = 0;
+        int length = 0;
 
         foreach (var range in originalText.Split('\n'))
         {
@@ -47,7 +61,7 @@ public static class Patch
             {
                 if (!currentRange.Equals(default))
                 {
-                    sb.AppendOutputLine(originalText[currentRange]);
+                    length = newText.AppendLine(originalText[currentRange], start: length);
                     currentRange = default;
                 }
                 foreach (var operation in operations)
@@ -59,7 +73,7 @@ public static class Patch
                     }
                     if (operation.IsOutputLine())
                     {
-                        sb.AppendOutputLine(operationText);
+                        length = newText.AppendLine(operationText, start: length);
                     }
                 }
             }
@@ -73,19 +87,21 @@ public static class Patch
 
         if (!currentRange.Equals(default))
         {
-            sb.AppendOutputLine(originalText[currentRange]);
+            length = newText.AppendLine(originalText[currentRange], start: length);
         }
 
-        return sb.ToString();
+        return length;
     }
 
-    private static void AppendOutputLine(this StringBuilder sb, ReadOnlySpan<char> line)
+    private static int AppendLine(this Span<char> buffer, ReadOnlySpan<char> line, int start)
     {
-        if (sb.Length > 0)
+        if (start > 0)
         {
-            sb.Append('\n');
+            buffer[start] = '\n';
+            start++;
         }
-        sb.Append(line);
+        line.CopyTo(buffer[start..]);
+        return start + line.Length;
     }
 
     private static FrozenDictionary<int, List<LineOperation>> GetLineOperations(ReadOnlySpan<char> patchText)

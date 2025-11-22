@@ -51,7 +51,7 @@ public sealed class PatchTest
         var diff = File.ReadAllText(Path.Join("Data", $"hamlet_{size}_{number}.patch"));
         var original = File.ReadAllText(Path.Join("Data", $"hamlet_{size}_old.txt"));
         var expected = File.ReadAllText(Path.Join("Data", $"hamlet_{size}_new.txt"));
-        var actual = Patch.Apply(diff, original);
+        var actual = Patch.Apply(diff, original).ToString();
         Assert.AreEqual(expected, actual);
     }
 }
