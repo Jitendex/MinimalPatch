@@ -102,7 +102,7 @@ internal sealed class UnifiedDiff
         ' ' => Operation.Equal,
         '-' => Operation.Delete,
         '+' => Operation.Insert,
-        '\\' => throw new NotImplementedException("'No newline at end of file' operations have not been implemented"),
+        '\\' => throw new NotSupportedException("'No newline at end of file' operations have not been implemented"),
         _ => null
     };
 
