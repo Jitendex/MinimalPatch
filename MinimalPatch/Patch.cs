@@ -33,9 +33,9 @@ public static class Patch
     /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
     public static ReadOnlySpan<char> Apply(ReadOnlySpan<char> patchText, ReadOnlySpan<char> originalText)
     {
-        var newText = new char[patchText.Length + originalText.Length];
-        var length = Apply(patchText, originalText, newText);
-        return newText.AsSpan(0, length);
+        var buffer = new char[patchText.Length + originalText.Length];
+        var length = Apply(patchText, originalText, buffer);
+        return buffer.AsSpan(0, length);
     }
 
     /// <summary>
@@ -43,16 +43,17 @@ public static class Patch
     /// </summary>
     /// <param name="patchText">Textual representation of the patch (unified diff format)</param>
     /// <param name="originalText">Text onto which the patch is applied.</param>
-    /// <param name="newText">Buffer containing the patched text.</param>
+    /// <param name="buffer">Buffer for containing the patched text.</param>
     /// <returns>The length of the patched text.</returns>
     /// <exception cref="InvalidDiffException">Thrown if the diff text cannot be parsed or if it is inconsistent with the input text.</exception>
     /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
-    public static int Apply(ReadOnlySpan<char> patchText, ReadOnlySpan<char> originalText, Span<char> newText)
+    public static int Apply(ReadOnlySpan<char> patchText, ReadOnlySpan<char> originalText, Span<char> buffer)
     {
         Range currentRange = default;
-        var lineOperations = GetLineOperations(patchText);
         int lineNumber = 0;
         int length = 0;
+
+        var lineOperations = GetLineOperations(patchText);
 
         foreach (var range in originalText.Split('\n'))
         {
@@ -61,7 +62,7 @@ public static class Patch
             {
                 if (!currentRange.Equals(default))
                 {
-                    length = newText.AppendLine(originalText[currentRange], start: length);
+                    length = buffer.AppendLine(originalText[currentRange], start: length);
                     currentRange = default;
                 }
                 foreach (var operation in operations)
@@ -73,7 +74,7 @@ public static class Patch
                     }
                     if (operation.IsOutputLine())
                     {
-                        length = newText.AppendLine(operationText, start: length);
+                        length = buffer.AppendLine(operationText, start: length);
                     }
                 }
             }
@@ -87,7 +88,7 @@ public static class Patch
 
         if (!currentRange.Equals(default))
         {
-            length = newText.AppendLine(originalText[currentRange], start: length);
+            length = buffer.AppendLine(originalText[currentRange], start: length);
         }
 
         return length;
