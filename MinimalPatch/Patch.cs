@@ -33,25 +33,26 @@ public static class Patch
     /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
     public static ReadOnlySpan<char> Apply(ReadOnlySpan<char> patchText, ReadOnlySpan<char> originalText)
     {
-        var buffer = new char[patchText.Length + originalText.Length];
-        var length = Apply(patchText, originalText, buffer);
-        return buffer.AsSpan(0, length);
+        var destination = new char[patchText.Length + originalText.Length];
+        Apply(patchText, originalText, destination, out int charsWritten);
+        return destination.AsSpan(0, charsWritten);
     }
 
     /// <summary>
-    /// Fill a text buffer with the result of a patch applied to an input text.
+    /// Fill a preallocated character span with the result of a patch applied to an input text.
     /// </summary>
     /// <param name="patchText">Textual representation of the patch (unified diff format)</param>
     /// <param name="originalText">Text onto which the patch is applied.</param>
-    /// <param name="buffer">Buffer for containing the patched text.</param>
+    /// <param name="destination">Buffer for containing the patched text.</param>
+    /// <param name="charsWritten">The number of characters written to the destination buffer.</param>
     /// <returns>The length of the patched text.</returns>
     /// <exception cref="InvalidDiffException">Thrown if the diff text cannot be parsed or if it is inconsistent with the input text.</exception>
     /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
-    public static int Apply(ReadOnlySpan<char> patchText, ReadOnlySpan<char> originalText, Span<char> buffer)
+    public static void Apply(ReadOnlySpan<char> patchText, ReadOnlySpan<char> originalText, Span<char> destination, out int charsWritten)
     {
         Range currentRange = default;
         int lineNumber = 0;
-        int length = 0;
+        charsWritten = 0;
 
         var lineOperations = GetLineOperations(patchText);
 
@@ -62,7 +63,7 @@ public static class Patch
             {
                 if (!currentRange.Equals(default))
                 {
-                    length = buffer.AppendLine(originalText[currentRange], start: length);
+                    charsWritten = destination.AppendLine(originalText[currentRange], start: charsWritten);
                     currentRange = default;
                 }
                 foreach (var operation in operations)
@@ -74,7 +75,7 @@ public static class Patch
                     }
                     if (operation.IsOutputLine())
                     {
-                        length = buffer.AppendLine(operationText, start: length);
+                        charsWritten = destination.AppendLine(operationText, start: charsWritten);
                     }
                 }
             }
@@ -88,10 +89,8 @@ public static class Patch
 
         if (!currentRange.Equals(default))
         {
-            length = buffer.AppendLine(originalText[currentRange], start: length);
+            charsWritten = destination.AppendLine(originalText[currentRange], start: charsWritten);
         }
-
-        return length;
     }
 
     private static int AppendLine(this Span<char> buffer, ReadOnlySpan<char> line, int start)
