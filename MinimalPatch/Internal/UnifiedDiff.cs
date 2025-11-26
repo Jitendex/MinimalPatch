@@ -35,7 +35,7 @@ internal sealed class UnifiedDiff
     public UnifiedDiff(ReadOnlySpan<char> text)
     {
         Hunk? hunk = null;
-        CurrentHunkLength currentLength = new();
+        CurrentHunkLength currentLength = default;
         byte currentDiffLineNum = 1;
 
         foreach (var range in text.Split('\n'))
@@ -49,8 +49,9 @@ internal sealed class UnifiedDiff
             }
             else if (line.StartsWith('@'))
             {
-                AddHunk(hunk, ref currentLength);
+                AddHunk(hunk, currentLength);
                 hunk = new Hunk(line);
+                currentLength = default;
                 _sumLengthA += hunk.Header.LengthA;
             }
             else if (line.Length > 0 && GetLineOperation(line[0]) is Operation operation)
@@ -67,7 +68,7 @@ internal sealed class UnifiedDiff
             }
         }
 
-        AddHunk(hunk, ref currentLength);
+        AddHunk(hunk, currentLength);
     }
 
     private static void ValidateHeaderLine(ReadOnlySpan<char> line, byte diffLineNum)
@@ -85,7 +86,7 @@ internal sealed class UnifiedDiff
         _ => throw new ArgumentOutOfRangeException(nameof(lineNumber))
     };
 
-    private void AddHunk(Hunk? hunk, ref CurrentHunkLength currentLength)
+    private void AddHunk(Hunk? hunk, CurrentHunkLength currentLength)
     {
         if (hunk is null)
         {
@@ -94,8 +95,6 @@ internal sealed class UnifiedDiff
         if (currentLength.A == hunk.Header.LengthA && currentLength.B == hunk.Header.LengthB)
         {
             _hunks.Add(hunk);
-            currentLength.A = 0;
-            currentLength.B = 0;
         }
         else
         {
