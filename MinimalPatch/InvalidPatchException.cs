@@ -19,8 +19,8 @@ along with MinimalPatch. If not, see <https://www.gnu.org/licenses/>.
 
 namespace MinimalPatch;
 
-public class InvalidDiffException : Exception
+public class InvalidPatchException : Exception
 {
-    public InvalidDiffException(string message) : base(message) { }
-    public InvalidDiffException(string message, Exception innerException) : base(message, innerException) { }
+    public InvalidPatchException(string message) : base(message) { }
+    public InvalidPatchException(string message, Exception innerException) : base(message, innerException) { }
 }

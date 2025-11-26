@@ -25,53 +25,76 @@ namespace MinimalPatch;
 public static class Patch
 {
     /// <summary>
+    /// Attempt to fill a preallocated character span with the result of a patch applied to an input text.
+    /// </summary>
+    /// <param name="patch">Textual representation of the patch (unified diff format)</param>
+    /// <param name="original">Text onto which the patch is applied.</param>
+    /// <param name="destination">Buffer for containing the patched text.</param>
+    /// <param name="charsWritten">The number of characters written to the destination buffer.</param>
+    /// <returns>A value indicating whether the operation succeeded.</returns>
+    /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
+    public static bool TryApply(ReadOnlySpan<char> patch, ReadOnlySpan<char> original, Span<char> destination, out int charsWritten)
+    {
+        try
+        {
+            charsWritten = Apply(patch, original, destination);
+            return true;
+        }
+        catch
+        {
+            charsWritten = default;
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Apply a patch to an input text and return the result.
     /// </summary>
-    /// <param name="patchText">Textual representation of the patch (unified diff format)</param>
-    /// <param name="originalText">Text onto which the patch is applied.</param>
-    /// <exception cref="InvalidDiffException">Thrown if the diff text cannot be parsed or if it is inconsistent with the input text.</exception>
+    /// <param name="patch">Textual representation of the patch (unified diff format)</param>
+    /// <param name="original">Text onto which the patch is applied.</param>
+    /// <exception cref="InvalidPatchException">Thrown if the patch text cannot be parsed or if it is inconsistent with the input text.</exception>
     /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
-    public static ReadOnlySpan<char> Apply(ReadOnlySpan<char> patchText, ReadOnlySpan<char> originalText)
+    public static ReadOnlySpan<char> Apply(ReadOnlySpan<char> patch, ReadOnlySpan<char> original)
     {
-        var destination = new char[patchText.Length + originalText.Length];
-        Apply(patchText, originalText, destination, out int charsWritten);
-        return destination.AsSpan(0, charsWritten);
+        var destination = (new char[patch.Length + original.Length]).AsSpan();
+        int charsWritten = Apply(patch, original, destination);
+        return destination[..charsWritten];
     }
 
     /// <summary>
     /// Fill a preallocated character span with the result of a patch applied to an input text.
     /// </summary>
-    /// <param name="patchText">Textual representation of the patch (unified diff format)</param>
-    /// <param name="originalText">Text onto which the patch is applied.</param>
+    /// <param name="patch">Textual representation of the patch (unified diff format)</param>
+    /// <param name="original">Text onto which the patch is applied.</param>
     /// <param name="destination">Buffer for containing the patched text.</param>
     /// <param name="charsWritten">The number of characters written to the destination buffer.</param>
     /// <returns>The length of the patched text.</returns>
-    /// <exception cref="InvalidDiffException">Thrown if the diff text cannot be parsed or if it is inconsistent with the input text.</exception>
+    /// <exception cref="InvalidPatchException">Thrown if the diff text cannot be parsed or if it is inconsistent with the input text.</exception>
     /// <remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
-    public static void Apply(ReadOnlySpan<char> patchText, ReadOnlySpan<char> originalText, Span<char> destination, out int charsWritten)
+    public static int Apply(ReadOnlySpan<char> patch, ReadOnlySpan<char> original, Span<char> destination)
     {
         Range currentRange = default;
         int lineNumber = 0;
-        charsWritten = 0;
+        int charsWritten = 0;
 
-        var lineOperations = GetLineOperations(patchText);
+        var lineOperations = GetLineOperations(patch);
 
-        foreach (var range in originalText.Split('\n'))
+        foreach (var range in original.Split('\n'))
         {
             lineNumber++;
             if (lineOperations.TryGetValue(lineNumber, out var operations))
             {
                 if (!currentRange.Equals(default))
                 {
-                    charsWritten = destination.AppendLine(originalText[currentRange], start: charsWritten);
+                    charsWritten = destination.AppendLine(original[currentRange], start: charsWritten);
                     currentRange = default;
                 }
                 foreach (var operation in operations)
                 {
-                    var operationText = patchText[operation.Range];
+                    var operationText = patch[operation.Range];
                     if (operation.IsOriginalLine())
                     {
-                        Validate(expected: operationText, actual: originalText[range], lineNumber);
+                        Validate(expected: operationText, actual: original[range], lineNumber);
                     }
                     if (operation.IsOutputLine())
                     {
@@ -89,8 +112,10 @@ public static class Patch
 
         if (!currentRange.Equals(default))
         {
-            charsWritten = destination.AppendLine(originalText[currentRange], start: charsWritten);
+            charsWritten = destination.AppendLine(original[currentRange], start: charsWritten);
         }
+
+        return charsWritten;
     }
 
     private static int AppendLine(this Span<char> buffer, ReadOnlySpan<char> line, int start)
@@ -104,16 +129,16 @@ public static class Patch
         return start + line.Length;
     }
 
-    private static FrozenDictionary<int, List<LineOperation>> GetLineOperations(ReadOnlySpan<char> patchText)
+    private static FrozenDictionary<int, List<LineOperation>> GetLineOperations(ReadOnlySpan<char> patch)
     {
         try
         {
-            UnifiedDiff diff = new(patchText);
+            UnifiedDiff diff = new(patch);
             return diff.GetLineOperations();
         }
         catch (Exception ex)
         {
-            throw new InvalidDiffException("Error occurred while parsing patch text", ex);
+            throw new InvalidPatchException("Error occurred while parsing patch text", ex);
         }
     }
 
@@ -121,7 +146,7 @@ public static class Patch
     {
         if (!expected.Equals(actual, StringComparison.Ordinal))
         {
-            throw new InvalidDiffException($"Line #{lineNumber} of original text does not match the corresponding line in the patch");
+            throw new InvalidPatchException($"Line #{lineNumber} of original text does not match the corresponding line in the patch");
         }
     }
 }

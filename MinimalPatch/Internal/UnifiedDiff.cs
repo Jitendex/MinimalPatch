@@ -64,7 +64,7 @@ internal sealed class UnifiedDiff
             }
             else
             {
-                throw new InvalidDiffException($"Line does not begin with a standard prefix: `{line}`");
+                throw new InvalidPatchException($"Line does not begin with a standard prefix: `{line}`");
             }
         }
 
@@ -75,7 +75,7 @@ internal sealed class UnifiedDiff
     {
         if (!line.StartsWith(HeaderPrefix(lineNumber), StringComparison.Ordinal))
         {
-            throw new InvalidDiffException("UnifiedDiff text does not begin with the standard header");
+            throw new InvalidPatchException("UnifiedDiff text does not begin with the standard header");
         }
     }
 
@@ -98,7 +98,7 @@ internal sealed class UnifiedDiff
         }
         else
         {
-            throw new InvalidDiffException("Hunk header does not match count of line operations");
+            throw new InvalidPatchException("Hunk header does not match count of line operations");
         }
     }
 
@@ -115,7 +115,7 @@ internal sealed class UnifiedDiff
     {
         if (hunk is null)
         {
-            throw new InvalidDiffException("Line operation found before any hunks");
+            throw new InvalidPatchException("Line operation found before any hunks");
         }
         if (operation.IsFileA())
         {
