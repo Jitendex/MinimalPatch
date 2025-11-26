@@ -33,12 +33,12 @@ internal readonly record struct HunkHeader
             var subtext = text[range];
             if (subtext.StartsWith('-'))
             {
-                (StartA, LengthA) = GetStartAndLength(subtext[1..]);
+                (StartA, LengthA) = Parse(subtext[1..]);
             }
             else if (subtext.StartsWith('+'))
             {
                 // StartB isn't used for anything.
-                (_, LengthB) = GetStartAndLength(subtext[1..]);
+                (_, LengthB) = Parse(subtext[1..]);
             }
             else if (subtext.StartsWith('@') && !seenHeaderStart)
             {
@@ -51,18 +51,35 @@ internal readonly record struct HunkHeader
         }
     }
 
-    private static (int, int) GetStartAndLength(ReadOnlySpan<char> text)
+    private readonly ref struct HeaderElement
+    {
+        public readonly int Start { get; init; }
+        public readonly int Length { get; init; }
+        public void Deconstruct(out int start, out int length)
+        {
+            start = Start;
+            length = Length;
+        }
+    }
+
+    private static HeaderElement Parse(ReadOnlySpan<char> text)
     {
         int i = text.IndexOf(',');
         if (i == -1)
         {
-            return (int.Parse(text), 1);
+            return new HeaderElement
+            {
+                Start = int.Parse(text),
+                Length = 1
+            };
         }
         else
         {
-            int start = int.Parse(text[..i]);
-            int length = int.Parse(text[(i + 1)..]);
-            return (start, length);
+            return new HeaderElement
+            {
+                Start = int.Parse(text[..i]),
+                Length = int.Parse(text[(i + 1)..]),
+            };
         }
     }
 }
