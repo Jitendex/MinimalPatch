@@ -25,38 +25,37 @@ internal sealed class UnifiedDiff
 {
     private readonly List<Hunk> _hunks = [];
     private readonly int _sumLengthA = 0;
-    private ref struct ConstructorState
+
+    private ref struct CurrentHunkLength
     {
-        public int CurrentDiffLineNum;
-        public int CurrentLineNumA;
-        public int CurrentLengthA;
-        public int CurrentLengthB;
+        public int A;
+        public int B;
     }
 
     public UnifiedDiff(ReadOnlySpan<char> text)
     {
-        ConstructorState state = new();
         Hunk? hunk = null;
+        CurrentHunkLength currentLength = new();
+        int currentDiffLineNum = 0;
 
         foreach (var range in text.Split('\n'))
         {
-            state.CurrentDiffLineNum++;
+            currentDiffLineNum++;
             var line = text[range];
 
-            if (state.CurrentDiffLineNum < 3)
+            if (currentDiffLineNum < 3)
             {
-                ValidateHeaderLine(line, state.CurrentDiffLineNum);
+                ValidateHeaderLine(line, currentDiffLineNum);
             }
             else if (line.StartsWith('@'))
             {
-                AddHunk(hunk, ref state);
+                AddHunk(hunk, ref currentLength);
                 hunk = new Hunk(line);
                 _sumLengthA += hunk.Header.LengthA;
-                state.CurrentLineNumA = hunk.Header.StartA - 1;
             }
             else if (line.Length > 0 && GetLineOperation(line[0]) is Operation operation)
             {
-                AddLineOperation(hunk, operation, range, ref state);
+                AddLineOperation(hunk, operation, range, ref currentLength);
             }
             else if (range.Start.Equals(text.Length) && range.End.Equals(text.Length))
             {
@@ -64,11 +63,11 @@ internal sealed class UnifiedDiff
             }
             else
             {
-                throw new InvalidDiffException($"Line #{state.CurrentDiffLineNum} in unidiff text does not begin with a standard prefix");
+                throw new InvalidDiffException($"Line #{currentDiffLineNum} in unidiff text does not begin with a standard prefix");
             }
         }
 
-        AddHunk(hunk, ref state);
+        AddHunk(hunk, ref currentLength);
     }
 
     private static void ValidateHeaderLine(ReadOnlySpan<char> line, int diffLineNum)
@@ -86,17 +85,17 @@ internal sealed class UnifiedDiff
         _ => throw new ArgumentOutOfRangeException(nameof(lineNumber))
     };
 
-    private void AddHunk(Hunk? hunk, ref ConstructorState state)
+    private void AddHunk(Hunk? hunk, ref CurrentHunkLength currentLength)
     {
         if (hunk is null)
         {
             return;
         }
-        if (state.CurrentLengthA == hunk.Header.LengthA && state.CurrentLengthB == hunk.Header.LengthB)
+        if (currentLength.A == hunk.Header.LengthA && currentLength.B == hunk.Header.LengthB)
         {
             _hunks.Add(hunk);
-            state.CurrentLengthA = 0;
-            state.CurrentLengthB = 0;
+            currentLength.A = 0;
+            currentLength.B = 0;
         }
         else
         {
@@ -113,7 +112,7 @@ internal sealed class UnifiedDiff
         _ => null
     };
 
-    private static void AddLineOperation(Hunk? hunk, Operation operation, Range range, ref ConstructorState state)
+    private static void AddLineOperation(Hunk? hunk, Operation operation, Range range, ref CurrentHunkLength currentLength)
     {
         if (hunk is null)
         {
@@ -121,18 +120,14 @@ internal sealed class UnifiedDiff
         }
         if (operation.IsFileA())
         {
-            state.CurrentLineNumA++;
-            state.CurrentLengthA++;
+            currentLength.A++;
         }
         if (operation.IsFileB())
         {
-            state.CurrentLengthB++;
+            currentLength.B++;
         }
 
-        // CurrentLineNumA is initialized to StartA - 1.
-        // If the first operations are inserts, then CurrentLineNumA
-        // will be less than StartA and therefore out of range.
-        int idx = int.Max(state.CurrentLineNumA, hunk.Header.StartA) - hunk.Header.StartA;
+        int idx = int.Max(currentLength.A - 1, 0);
 
         hunk.LineOperations[idx].Add(new LineOperation
         {
