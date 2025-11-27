@@ -24,7 +24,7 @@ namespace MinimalPatch.Internal;
 internal sealed class UnifiedDiff
 {
     private readonly List<Hunk> _hunks = [];
-    private readonly int _sumLengthA = 0;
+    private int _totalLineOperationCount = 0;
 
     private ref struct HunkLength
     {
@@ -52,7 +52,6 @@ internal sealed class UnifiedDiff
                 AddHunk(hunk, currentLength);
                 hunk = new Hunk(line);
                 currentLength = default;
-                _sumLengthA += hunk.Header.LengthA;
             }
             else if (line.Length > 0 && GetLineOperation(line[0]) is Operation operation)
             {
@@ -95,6 +94,7 @@ internal sealed class UnifiedDiff
         if (hunk.Header.LengthA == actualLength.A && hunk.Header.LengthB == actualLength.B)
         {
             _hunks.Add(hunk);
+            _totalLineOperationCount += hunk.LineOperations.Length;
         }
         else
         {
@@ -138,7 +138,7 @@ internal sealed class UnifiedDiff
 
     public FrozenDictionary<int, List<LineOperation>> GetLineOperations()
     {
-        var pairs = new KeyValuePair<int, List<LineOperation>>[_sumLengthA];
+        var pairs = new KeyValuePair<int, List<LineOperation>>[_totalLineOperationCount];
         int pairIdx = 0;
         foreach (var hunk in _hunks)
         {

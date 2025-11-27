@@ -32,14 +32,11 @@ internal sealed class Hunk
         }
         catch (Exception ex)
         {
-            throw new InvalidPatchException($"Cannot parse patch hunk header `{header}`", ex);
+            throw new InvalidPatchException($"Cannot parse patch hunk header: `{header}`", ex);
         }
 
-        // Note that Header.LengthA could be zero or negative here.
-        int operationsCount = int.Max(1, Header.LengthA);
-
-        LineOperations = new List<LineOperation>[operationsCount];
-        for (int i = 0; i < operationsCount; i++)
+        LineOperations = new List<LineOperation>[Header.LengthA];
+        for (int i = 0; i < Header.LengthA; i++)
         {
             // Adjusting the initial capacity of the lists
             // doesn't appear to affect performance much.
