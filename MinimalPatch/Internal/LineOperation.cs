@@ -21,8 +21,11 @@ namespace MinimalPatch.Internal;
 
 internal readonly record struct LineOperation(Operation Operation, Range Range)
 {
-    public bool IsOriginalLine() => Operation.IsFileA();
-    public bool IsOutputLine() => Operation.IsFileB();
+    // All lines in file A are either `Equal` or `Delete`
+    public bool IsOriginalLine() => Operation != Operation.Insert;
+
+    // All lines in file B are either `Equal` or `Insert`
+    public bool IsOutputLine() => Operation != Operation.Delete;
 }
 
 internal enum Operation : byte
@@ -30,13 +33,4 @@ internal enum Operation : byte
     Equal,
     Delete,
     Insert,
-}
-
-internal static class OperationExtensions
-{
-    // All lines in file A are either `Equal` or `Delete`
-    public static bool IsFileA(this Operation operation) => operation != Operation.Insert;
-
-    // All lines in file B are either `Equal` or `Insert`
-    public static bool IsFileB(this Operation operation) => operation != Operation.Delete;
 }

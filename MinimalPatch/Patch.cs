@@ -28,26 +28,43 @@ public static class Patch
     /// <include file='docs.xml' path='docs/method[@name="Apply" and @overload="0"]/*'/>
     public static string Apply(ReadOnlySpan<char> patch, ReadOnlySpan<char> original)
     {
-        // The length of the resulting text is strictly less than the
-        // combined length of the patch text and the original text.
-        var destination = (new char[patch.Length + original.Length]).AsSpan();
-        int charsWritten = Apply(patch, original, destination);
+        var diff = Parse(patch);
+        int outputLength = original.Length + diff.TotalCharacterCountDelta;
+        var lineOperations = diff.GetLineOperations();
+        var inputState = new InputState
+        {
+            Patch = patch,
+            Original = original,
+            LineOperations = lineOperations,
+        };
         return string.Create
         (
-            length: charsWritten,
-            state: destination[..charsWritten],
-            action: static (output, state) => state.CopyTo(output)
+            length: outputLength,
+            state: inputState,
+            action: static (output, state)
+                => Apply(state.Patch, state.Original, output, state.LineOperations)
         );
     }
 
     /// <include file='docs.xml' path='docs/method[@name="Apply" and @overload="1"]/*'/>
     public static int Apply(ReadOnlySpan<char> patch, ReadOnlySpan<char> original, Span<char> destination)
     {
+        var diff = Parse(patch);
+        var lineOperations = diff.GetLineOperations();
+        return Apply(patch, original, destination, lineOperations);
+    }
+
+    private static int Apply
+    (
+        ReadOnlySpan<char> patch,
+        ReadOnlySpan<char> original,
+        Span<char> destination,
+        FrozenDictionary<int, List<LineOperation>> lineOperations
+    )
+    {
         Range currentRange = default;
         int lineNumber = 0;
         int charsWritten = 0;
-
-        var lineOperations = GetLineOperations(patch);
 
         foreach (var range in original.Split('\n'))
         {
@@ -99,12 +116,11 @@ public static class Patch
         return start + line.Length;
     }
 
-    private static FrozenDictionary<int, List<LineOperation>> GetLineOperations(ReadOnlySpan<char> patch)
+    private static UnifiedDiff Parse(ReadOnlySpan<char> patch)
     {
         try
         {
-            UnifiedDiff diff = new(patch);
-            return diff.GetLineOperations();
+            return new UnifiedDiff(patch);
         }
         catch (Exception ex)
         {
@@ -118,5 +134,12 @@ public static class Patch
         {
             throw new InvalidPatchException($"Line #{lineNumber} of original text does not match the corresponding line in the patch");
         }
+    }
+
+    private readonly ref struct InputState
+    {
+        public readonly ReadOnlySpan<char> Patch { get; init; }
+        public readonly ReadOnlySpan<char> Original { get; init; }
+        public readonly FrozenDictionary<int, List<LineOperation>> LineOperations { get; init; }
     }
 }

@@ -32,6 +32,8 @@ internal sealed class UnifiedDiff
         public int B;
     }
 
+    public int TotalCharacterCountDelta { get; private set; }
+
     public UnifiedDiff(ReadOnlySpan<char> text)
     {
         Hunk? hunk = null;
@@ -111,19 +113,27 @@ internal sealed class UnifiedDiff
         _ => null
     };
 
-    private static void AddLineOperation(Hunk? hunk, Operation operation, Range range, ref HunkLength currentLength)
+    private void AddLineOperation(Hunk? hunk, Operation operation, Range range, ref HunkLength currentLength)
     {
         if (hunk is null)
         {
             throw new InvalidPatchException("Line operation found before any hunks");
         }
-        if (operation.IsFileA())
+
+        switch (operation)
         {
-            currentLength.A++;
-        }
-        if (operation.IsFileB())
-        {
-            currentLength.B++;
+            case Operation.Equal:
+                currentLength.A++;
+                currentLength.B++;
+                break;
+            case Operation.Delete:
+                currentLength.A++;
+                TotalCharacterCountDelta -= range.End.Value - range.Start.Value;
+                break;
+            case Operation.Insert:
+                currentLength.B++;
+                TotalCharacterCountDelta += range.End.Value - range.Start.Value;
+                break;
         }
 
         int idx = int.Max(currentLength.A - 1, 0);
