@@ -24,7 +24,7 @@ namespace MinimalPatch.Internal;
 internal sealed class UnifiedDiff
 {
     private readonly List<Hunk> _hunks = [];
-    private int _totalLineOperationCount = 0;
+    private int _totalLineDiffCount = 0;
 
     private ref struct HunkLength
     {
@@ -96,7 +96,7 @@ internal sealed class UnifiedDiff
         if (hunk.Header.LengthA == actualLength.A && hunk.Header.LengthB == actualLength.B)
         {
             _hunks.Add(hunk);
-            _totalLineOperationCount += hunk.LineOperations.Length;
+            _totalLineDiffCount += hunk.LineDiffs.Length;
         }
         else
         {
@@ -139,7 +139,7 @@ internal sealed class UnifiedDiff
         int idx = int.Max(currentLength.A - 1, 0);
 
         // If `idx` is too large for this array, then the header metadata was incorrect.
-        hunk.LineOperations[idx].Add(new DiffLine
+        hunk.LineDiffs[idx].Add(new DiffLine
         {
             Operation = operation,
             PatchRange = new Range(range.Start.Value + 1, range.End),
@@ -148,14 +148,14 @@ internal sealed class UnifiedDiff
 
     public FrozenDictionary<int, List<DiffLine>> GetLineNumberToDiffs()
     {
-        var pairs = new KeyValuePair<int, List<DiffLine>>[_totalLineOperationCount];
+        var pairs = new KeyValuePair<int, List<DiffLine>>[_totalLineDiffCount];
         int pairIdx = 0;
         foreach (var hunk in _hunks)
         {
-            for (int i = 0; i < hunk.LineOperations.Length; i++)
+            for (int i = 0; i < hunk.LineDiffs.Length; i++)
             {
                 int lineNumber = hunk.Header.StartA + i;
-                pairs[pairIdx] = new(lineNumber, hunk.LineOperations[i]);
+                pairs[pairIdx] = new(lineNumber, hunk.LineDiffs[i]);
                 pairIdx++;
             }
         }
