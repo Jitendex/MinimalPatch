@@ -26,7 +26,15 @@ internal sealed class Hunk
 
     public Hunk(ReadOnlySpan<char> header)
     {
-        Header = new HunkHeader(header);
+        try
+        {
+            Header = new HunkHeader(header);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidPatchException($"Cannot parse patch hunk header `{header}`", ex);
+        }
+
         // Note that Header.LengthA could be zero or negative here.
         int operationsCount = int.Max(1, Header.LengthA);
 
