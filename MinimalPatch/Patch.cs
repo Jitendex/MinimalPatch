@@ -29,17 +29,15 @@ public static class Patch
     public static string Apply(ReadOnlySpan<char> patch, ReadOnlySpan<char> original)
     {
         var diff = Parse(patch);
-        int outputLength = original.Length + diff.TotalCharacterCountDelta;
-        var lineOperations = diff.GetLineOperations();
         var inputState = new InputState
         {
             Patch = patch,
             Original = original,
-            LineOperations = lineOperations,
+            LineOperations = diff.GetLineOperations(),
         };
         return string.Create
         (
-            length: outputLength,
+            length: original.Length + diff.TotalCharacterCountDelta,
             state: inputState,
             action: static (output, state)
                 => Apply(state.Patch, state.Original, output, state.LineOperations)
