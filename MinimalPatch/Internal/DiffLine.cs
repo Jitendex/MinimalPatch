@@ -19,7 +19,7 @@ along with MinimalPatch. If not, see <https://www.gnu.org/licenses/>.
 
 namespace MinimalPatch.Internal;
 
-internal readonly record struct DiffLine(Operation Operation, Range PatchRange) { }
+internal readonly record struct DiffLine(Operation Operation, Range PatchRange);
 
 internal enum Operation : byte
 {
