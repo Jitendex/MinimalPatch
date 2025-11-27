@@ -29,7 +29,7 @@ public static class Patch
     public static string Apply(ReadOnlySpan<char> patch, ReadOnlySpan<char> original)
     {
         var diff = Parse(patch);
-        var inputState = new InputState
+        var input = new InputState
         {
             Patch = patch,
             Original = original,
@@ -38,9 +38,8 @@ public static class Patch
         return string.Create
         (
             length: original.Length + diff.TotalCharacterCountDelta,
-            state: inputState,
-            action: static (output, state)
-                => Apply(state.Patch, state.Original, output, state.LineOperations)
+            state: input,
+            action: static (output, state) => Apply(state, output)
         );
     }
 
@@ -48,38 +47,37 @@ public static class Patch
     public static int Apply(ReadOnlySpan<char> patch, ReadOnlySpan<char> original, Span<char> destination)
     {
         var diff = Parse(patch);
-        var lineOperations = diff.GetLineOperations();
-        return Apply(patch, original, destination, lineOperations);
+        var input = new InputState
+        {
+            Patch = patch,
+            Original = original,
+            LineOperations = diff.GetLineOperations(),
+        };
+        return Apply(input, destination);
     }
 
-    private static int Apply
-    (
-        ReadOnlySpan<char> patch,
-        ReadOnlySpan<char> original,
-        Span<char> destination,
-        FrozenDictionary<int, List<LineOperation>> lineOperations
-    )
+    private static int Apply(InputState input, Span<char> destination)
     {
         Range currentRange = default;
         int lineNumber = 0;
         int charsWritten = 0;
 
-        foreach (var range in original.Split('\n'))
+        foreach (var range in input.Original.Split('\n'))
         {
             lineNumber++;
-            if (lineOperations.TryGetValue(lineNumber, out var operations))
+            if (input.LineOperations.TryGetValue(lineNumber, out var operations))
             {
                 if (!currentRange.Equals(default))
                 {
-                    charsWritten = destination.AppendLine(original[currentRange], start: charsWritten);
+                    charsWritten = destination.AppendLine(input.Original[currentRange], start: charsWritten);
                     currentRange = default;
                 }
                 foreach (var operation in operations)
                 {
-                    var operationText = patch[operation.Range];
+                    var operationText = input.Patch[operation.Range];
                     if (operation.IsOriginalLine())
                     {
-                        Validate(expected: operationText, actual: original[range], lineNumber);
+                        Validate(expected: operationText, actual: input.Original[range], lineNumber);
                     }
                     if (operation.IsOutputLine())
                     {
@@ -97,7 +95,7 @@ public static class Patch
 
         if (!currentRange.Equals(default))
         {
-            charsWritten = destination.AppendLine(original[currentRange], start: charsWritten);
+            charsWritten = destination.AppendLine(input.Original[currentRange], start: charsWritten);
         }
 
         return charsWritten;
