@@ -67,23 +67,19 @@ internal readonly record struct HunkHeader
     }
 
     private static HeaderElement Parse(ReadOnlySpan<char> text)
-    {
-        int i = text.IndexOf(',');
-        if (i == -1)
+        => text.IndexOf(',') switch
         {
-            return new HeaderElement
-            {
-                Start = int.Parse(text),
-                Length = 1
-            };
-        }
-        else
-        {
-            return new HeaderElement
-            {
-                Start = int.Parse(text[..i]),
-                Length = int.Parse(text[(i + 1)..]),
-            };
-        }
-    }
+            int idx and not -1 =>
+                new HeaderElement
+                {
+                    Start = int.Parse(text[..idx]),
+                    Length = int.Parse(text[(idx + 1)..]),
+                },
+            _ =>
+                new HeaderElement
+                {
+                    Start = int.Parse(text),
+                    Length = 1,
+                }
+        };
 }
