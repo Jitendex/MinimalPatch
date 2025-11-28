@@ -23,6 +23,9 @@ internal readonly record struct HunkHeader
     public readonly int LengthA { get; }
     public readonly int LengthB { get; }
 
+    /// <summary>
+    /// Parses hunk header in the format `@@ -StartA,LengthA +StartB,LengthB @@ [Comments]`
+    /// </summary>
     public HunkHeader(ReadOnlySpan<char> text)
     {
         bool seenHeaderStart = false;

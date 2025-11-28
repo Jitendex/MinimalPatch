@@ -19,6 +19,12 @@ using System.Collections.Frozen;
 
 namespace MinimalPatch.Internal;
 
+/// <summary>
+/// Represents a diff in Unified Format
+/// </summary>
+/// <remarks>
+/// See: https://www.gnu.org/software/diffutils/manual/html_node/Detailed-Unified.html
+/// </remarks>
 internal sealed class UnifiedDiff
 {
     private readonly List<Hunk> _hunks = [];
