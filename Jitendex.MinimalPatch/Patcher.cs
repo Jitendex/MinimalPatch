@@ -20,11 +20,11 @@ using Jitendex.MinimalPatch.Internal;
 
 namespace Jitendex.MinimalPatch;
 
-/// <include file='docs.xml' path='docs/class[@name="Patch"]/*'/>
-public static class Patch
+/// <include file='docs.xml' path='docs/class[@name="Patcher"]/*'/>
+public static class Patcher
 {
-    /// <include file='docs.xml' path='docs/method[@name="Apply" and @overload="0"]/*'/>
-    public static string Apply(ReadOnlySpan<char> patch, ReadOnlySpan<char> original)
+    /// <include file='docs.xml' path='docs/method[@name="ApplyPatch" and @overload="0"]/*'/>
+    public static string ApplyPatch(ReadOnlySpan<char> patch, ReadOnlySpan<char> original)
     {
         var unifiedDiff = Parse(patch);
         var input = new InputState
@@ -41,8 +41,8 @@ public static class Patch
         );
     }
 
-    /// <include file='docs.xml' path='docs/method[@name="Apply" and @overload="1"]/*'/>
-    public static int Apply(ReadOnlySpan<char> patch, ReadOnlySpan<char> original, Span<char> destination)
+    /// <include file='docs.xml' path='docs/method[@name="ApplyPatch" and @overload="1"]/*'/>
+    public static int ApplyPatch(ReadOnlySpan<char> patch, ReadOnlySpan<char> original, Span<char> destination)
     {
         var unifiedDiff = Parse(patch);
         var input = new InputState

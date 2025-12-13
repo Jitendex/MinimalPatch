@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <docs>
-	<class name="Patch">
+	<class name="Patcher">
 		<summary>
 			Minimalistic library for applying a patch (unified diff format) to some text.
 		</summary>
 		<remarks>The patch metadata must match the input text perfectly. There is no fuzzy matching.</remarks>
 	</class>
-	<method name="Apply" overload="0">
+	<method name="ApplyPatch" overload="0">
 		<summary>Apply a patch to some text and return the result.</summary>
 		<param name="patch">Textual representation of the patch (unified diff format).</param>
 		<param name="original">Text onto which the patch is applied.</param>
@@ -15,7 +15,7 @@
 			Thrown if the patch text cannot be parsed or if it is inconsistent with the input text.
 		</exception>
 	</method>
-	<method name="Apply" overload="1">
+	<method name="ApplyPatch" overload="1">
 		<summary>
 			Fill a preallocated character span with the result of a patch applied to an input text.
 		</summary>

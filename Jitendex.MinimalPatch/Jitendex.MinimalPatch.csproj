@@ -6,10 +6,9 @@
   </PropertyGroup>
   <PropertyGroup Label="NuGet Packaging">
     <PackageId>MinimalPatch</PackageId>
-    <Version>2025.11.28</Version>
     <Authors>Stephen Kraus</Authors>
-    <PackageDescription>Minimalistic library for applying a patch (unified diff format) to some text</PackageDescription>
-    <RepositoryUrl>https://github.com/stephenmk/MinimalPatch</RepositoryUrl>
+    <PackageDescription>Minimal library for applying a text patch (unified diff format)</PackageDescription>
+    <RepositoryUrl>https://github.com/Jitendex/MinimalPatch</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>

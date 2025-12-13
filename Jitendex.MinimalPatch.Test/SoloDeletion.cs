@@ -44,7 +44,7 @@ public sealed class SoloDeletion
             3
             """;
 
-        var actual = Patch.Apply(diff, Original);
+        var actual = Patcher.ApplyPatch(diff, Original);
         Assert.AreEqual(expected, actual);
     }
 
@@ -65,7 +65,7 @@ public sealed class SoloDeletion
             3
             """;
 
-        var actual = Patch.Apply(diff, Original);
+        var actual = Patcher.ApplyPatch(diff, Original);
         Assert.AreEqual(expected, actual);
     }
 
@@ -86,7 +86,7 @@ public sealed class SoloDeletion
             2
             """;
 
-        var actual = Patch.Apply(diff, Original);
+        var actual = Patcher.ApplyPatch(diff, Original);
         Assert.AreEqual(expected, actual);
     }
 }

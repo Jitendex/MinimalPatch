@@ -45,7 +45,7 @@ public sealed class SoloInsert
             B
             """;
 
-        var actual = Patch.Apply(diff, Original);
+        var actual = Patcher.ApplyPatch(diff, Original);
         Assert.AreEqual(expected, actual);
     }
 
@@ -68,7 +68,7 @@ public sealed class SoloInsert
             B
             """;
 
-        var actual = Patch.Apply(diff, Original);
+        var actual = Patcher.ApplyPatch(diff, Original);
         Assert.AreEqual(expected, actual);
     }
 
@@ -91,7 +91,7 @@ public sealed class SoloInsert
             3
             """;
 
-        var actual = Patch.Apply(diff, Original);
+        var actual = Patcher.ApplyPatch(diff, Original);
         Assert.AreEqual(expected, actual);
     }
 }
