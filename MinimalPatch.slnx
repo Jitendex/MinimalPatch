@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="MinimalPatch.Benchmark/MinimalPatch.Benchmark.csproj" />
+  <Project Path="MinimalPatch.Test/MinimalPatch.Test.csproj" />
+  <Project Path="MinimalPatch/MinimalPatch.csproj" />
+</Solution>
