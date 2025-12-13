@@ -17,7 +17,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 using System.Diagnostics;
 
-namespace MinimalPatch.Test;
+namespace Jitendex.MinimalPatch.Test;
 
 [Ignore]
 [TestClass]

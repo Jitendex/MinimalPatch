@@ -17,7 +17,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 using System.Collections.Frozen;
 
-namespace MinimalPatch.Internal;
+namespace Jitendex.MinimalPatch.Internal;
 
 /// <summary>
 /// Represents a diff in Unified Format

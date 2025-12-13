@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License along with Min
 If not, see <https://www.gnu.org/licenses/>.
 */
 
-namespace MinimalPatch;
+namespace Jitendex.MinimalPatch;
 
 /// <summary>
 /// Exception that is thrown when a given patch text cannot be parsed or is inconsistent with the given target text.

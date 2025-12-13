@@ -16,9 +16,9 @@ If not, see <https://www.gnu.org/licenses/>.
 */
 
 using BenchmarkDotNet.Attributes;
-using MinimalPatch.Test;
+using Jitendex.MinimalPatch.Test;
 
-namespace MinimalPatch.Benchmark;
+namespace Jitendex.MinimalPatch.Benchmark;
 
 public class Benchmarks
 {

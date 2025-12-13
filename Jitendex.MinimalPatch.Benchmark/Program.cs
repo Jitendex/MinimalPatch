@@ -17,7 +17,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 using BenchmarkDotNet.Running;
 
-namespace MinimalPatch.Benchmark;
+namespace Jitendex.MinimalPatch.Benchmark;
 
 public class Program
 {

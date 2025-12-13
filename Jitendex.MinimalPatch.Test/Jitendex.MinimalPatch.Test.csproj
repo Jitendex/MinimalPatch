@@ -13,7 +13,7 @@
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MinimalPatch\MinimalPatch.csproj" />
+    <ProjectReference Include="..\Jitendex.MinimalPatch\Jitendex.MinimalPatch.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Data\*">

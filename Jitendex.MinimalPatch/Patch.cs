@@ -16,9 +16,9 @@ If not, see <https://www.gnu.org/licenses/>.
 */
 
 using System.Collections.Frozen;
-using MinimalPatch.Internal;
+using Jitendex.MinimalPatch.Internal;
 
-namespace MinimalPatch;
+namespace Jitendex.MinimalPatch;
 
 /// <include file='docs.xml' path='docs/class[@name="Patch"]/*'/>
 public static class Patch

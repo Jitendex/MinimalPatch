@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License along with Min
 If not, see <https://www.gnu.org/licenses/>.
 */
 
-namespace MinimalPatch.Test;
+namespace Jitendex.MinimalPatch.Test;
 
 [TestClass]
 public sealed class PatchTest

@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License along with Min
 If not, see <https://www.gnu.org/licenses/>.
 */
 
-namespace MinimalPatch.Internal;
+namespace Jitendex.MinimalPatch.Internal;
 
 internal sealed class Hunk
 {

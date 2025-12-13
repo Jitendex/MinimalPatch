@@ -9,6 +9,6 @@
     <PackageReference Include="BenchmarkDotNet" Version="0.15.6" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MinimalPatch.Test\MinimalPatch.Test.csproj" />
+    <ProjectReference Include="..\Jitendex.MinimalPatch.Test\Jitendex.MinimalPatch.Test.csproj" />
   </ItemGroup>
 </Project>
