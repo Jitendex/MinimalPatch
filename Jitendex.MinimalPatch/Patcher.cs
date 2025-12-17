@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License along with Min
 If not, see <https://www.gnu.org/licenses/>.
 */
 
-using System.Collections.Frozen;
 using Jitendex.MinimalPatch.Internal;
 
 namespace Jitendex.MinimalPatch;
@@ -26,60 +25,48 @@ public static class Patcher
     /// <include file='docs.xml' path='docs/method[@name="ApplyPatch" and @overload="0"]/*'/>
     public static string ApplyPatch(ReadOnlySpan<char> patch, ReadOnlySpan<char> original)
     {
-        var unifiedDiff = Parse(patch);
-        var input = new InputState
-        {
-            Patch = patch,
-            Original = original,
-            LineNumberToDiffs = unifiedDiff.GetLineNumberToDiffs(),
-        };
+        var state = new InputState(patch, original);
         return string.Create
         (
-            length: original.Length + unifiedDiff.TotalCharacterCountDelta,
-            state: input,
-            action: static (destination, input) => Apply(input, destination)
+            length: state.ExpectedOutputLength,
+            state: state,
+            action: static (destination, state) => Apply(state, destination)
         );
     }
 
     /// <include file='docs.xml' path='docs/method[@name="ApplyPatch" and @overload="1"]/*'/>
     public static int ApplyPatch(ReadOnlySpan<char> patch, ReadOnlySpan<char> original, Span<char> destination)
     {
-        var unifiedDiff = Parse(patch);
-        var input = new InputState
-        {
-            Patch = patch,
-            Original = original,
-            LineNumberToDiffs = unifiedDiff.GetLineNumberToDiffs(),
-        };
-        return Apply(input, destination);
+        var state = new InputState(patch, original);
+        return Apply(state, destination);
     }
 
-    private static int Apply(InputState input, Span<char> destination)
+    private static int Apply(in InputState state, Span<char> destination)
     {
         Range currentRange = default;
         int lineNumber = 0;
         int charsWritten = 0;
 
-        foreach (var range in input.Original.Split('\n'))
+        foreach (var range in state.Original.Split('\n'))
         {
             lineNumber++;
-            if (input.LineNumberToDiffs.TryGetValue(lineNumber, out var diffs))
+            if (state.LineNumberToDiffs.TryGetValue(lineNumber, out var diffs))
             {
                 if (!currentRange.Equals(default))
                 {
-                    charsWritten = destination.AppendLine(input.Original[currentRange], start: charsWritten);
+                    charsWritten = destination.AppendLine(state.Original[currentRange], start: charsWritten);
                     currentRange = default;
                 }
                 foreach (var diff in diffs)
                 {
-                    var operationText = input.Patch[diff.PatchRange];
+                    var operationText = state.Patch[diff.PatchRange];
                     switch (diff.Operation)
                     {
                         case Operation.Equal:
-                            Validate(expected: operationText, actual: input.Original[range], lineNumber);
+                            Validate(expected: operationText, actual: state.Original[range], lineNumber);
                             goto case Operation.Insert;
                         case Operation.Delete:
-                            Validate(expected: operationText, actual: input.Original[range], lineNumber);
+                            Validate(expected: operationText, actual: state.Original[range], lineNumber);
                             break;
                         case Operation.Insert:
                             charsWritten = destination.AppendLine(operationText, start: charsWritten);
@@ -97,7 +84,7 @@ public static class Patcher
 
         if (!currentRange.Equals(default))
         {
-            charsWritten = destination.AppendLine(input.Original[currentRange], start: charsWritten);
+            charsWritten = destination.AppendLine(state.Original[currentRange], start: charsWritten);
         }
 
         return charsWritten;
@@ -114,30 +101,11 @@ public static class Patcher
         return start + line.Length;
     }
 
-    private static UnifiedDiff Parse(ReadOnlySpan<char> patch)
-    {
-        try
-        {
-            return new UnifiedDiff(patch);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidPatchException("Error occurred while parsing patch text", ex);
-        }
-    }
-
     private static void Validate(ReadOnlySpan<char> expected, ReadOnlySpan<char> actual, int lineNumber)
     {
         if (!expected.Equals(actual, StringComparison.Ordinal))
         {
             throw new InvalidPatchException($"Line #{lineNumber} of original text does not match the corresponding line in the patch");
         }
-    }
-
-    private readonly ref struct InputState
-    {
-        public readonly ReadOnlySpan<char> Patch { get; init; }
-        public readonly ReadOnlySpan<char> Original { get; init; }
-        public readonly FrozenDictionary<int, List<DiffLine>> LineNumberToDiffs { get; init; }
     }
 }
