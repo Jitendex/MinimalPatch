@@ -25,7 +25,7 @@ public static class Patcher
     /// <include file='docs.xml' path='docs/method[@name="ApplyPatch" and @overload="0"]/*'/>
     public static string ApplyPatch(ReadOnlySpan<char> patch, ReadOnlySpan<char> original)
     {
-        var state = new InputState(patch, original);
+        InputState state = new(patch, original);
         return string.Create
         (
             length: state.ExpectedOutputLength,
@@ -37,7 +37,7 @@ public static class Patcher
     /// <include file='docs.xml' path='docs/method[@name="ApplyPatch" and @overload="1"]/*'/>
     public static int ApplyPatch(ReadOnlySpan<char> patch, ReadOnlySpan<char> original, Span<char> destination)
     {
-        var state = new InputState(patch, original);
+        InputState state = new(patch, original);
         return Apply(state, destination);
     }
 
@@ -49,8 +49,7 @@ public static class Patcher
 
         foreach (var range in state.Original.Split('\n'))
         {
-            lineNumber++;
-            if (state.LineNumberToDiffs.TryGetValue(lineNumber, out var diffs))
+            if (state.LineNumberToDiffs.TryGetValue(++lineNumber, out var diffs))
             {
                 if (!currentRange.Equals(default))
                 {
