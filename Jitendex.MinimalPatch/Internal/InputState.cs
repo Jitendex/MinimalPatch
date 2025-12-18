@@ -15,8 +15,6 @@ You should have received a copy of the GNU General Public License along with Min
 If not, see <https://www.gnu.org/licenses/>.
 */
 
-using System.Collections.Frozen;
-
 namespace Jitendex.MinimalPatch.Internal;
 
 internal readonly ref struct InputState
@@ -24,7 +22,7 @@ internal readonly ref struct InputState
     public readonly ReadOnlySpan<char> Patch { get; }
     public readonly ReadOnlySpan<char> Original { get; }
     public readonly int ExpectedOutputLength { get; }
-    public readonly FrozenDictionary<int, List<DiffLine>> LineNumberToDiffs { get; }
+    public readonly Dictionary<int, List<DiffLine>> LineNumberToDiffs { get; }
 
     public InputState(ReadOnlySpan<char> patch, ReadOnlySpan<char> original)
     {

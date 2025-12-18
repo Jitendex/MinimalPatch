@@ -15,8 +15,6 @@ You should have received a copy of the GNU General Public License along with Min
 If not, see <https://www.gnu.org/licenses/>.
 */
 
-using System.Collections.Frozen;
-
 namespace Jitendex.MinimalPatch.Internal;
 
 /// <summary>
@@ -154,31 +152,18 @@ internal sealed class UnifiedDiff
         });
     }
 
-    public FrozenDictionary<int, List<DiffLine>> GetLineNumberToDiffs()
+    public Dictionary<int, List<DiffLine>> GetLineNumberToDiffs()
     {
-        var pairs = new KeyValuePair<int, List<DiffLine>>[_totalDiffLinesCount];
-
-        // Need to validate the line numbers manually because FrozenDictionary.Create() doesn't complain about repeated keys.
-        // https://learn.microsoft.com/en-us/dotnet/api/system.collections.frozen.frozendictionary.create
-        // "If the same key appears multiple times in the input, the last one in the sequence takes precedence."
-        // "This differs from ToDictionary, where duplicate keys result in an exception."
-        var usedLineNumbers = new HashSet<int>(_totalDiffLinesCount);
-
-        int pairIdx = 0;
+        var dict = new Dictionary<int, List<DiffLine>>(_totalDiffLinesCount);
         foreach (var hunk in _hunks)
         {
+            int lineNumber = hunk.Header.StartA;
             for (int i = 0; i < hunk.ArrayOfDiffLines.Length; i++)
             {
-                int lineNumber = hunk.Header.StartA + i;
-                if (!usedLineNumbers.Add(lineNumber))
-                {
-                    throw new InvalidPatchException($"Patch has overlapping hunks for line number {lineNumber}");
-                }
-                pairs[pairIdx] = new(lineNumber, hunk.ArrayOfDiffLines[i]);
-                pairIdx++;
+                // Throws an error if line numbers are reused.
+                dict.Add(lineNumber++, hunk.ArrayOfDiffLines[i]);
             }
         }
-
-        return FrozenDictionary.Create<int, List<DiffLine>>(pairs);
+        return dict;
     }
 }
