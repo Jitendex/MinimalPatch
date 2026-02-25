@@ -43,7 +43,7 @@ public static class Patcher
 
     private static int Apply(in InputState state, Span<char> destination)
     {
-        Range currentRange = default;
+        Range? currentRange = null;
         int lineNumber = 0;
         int charsWritten = 0;
 
@@ -51,10 +51,10 @@ public static class Patcher
         {
             if (state.LineNumberToDiffs.TryGetValue(++lineNumber, out var diffs))
             {
-                if (!currentRange.Equals(default))
+                if (currentRange.HasValue)
                 {
-                    charsWritten = destination.AppendLine(state.Original[currentRange], start: charsWritten);
-                    currentRange = default;
+                    charsWritten = destination.AppendLine(state.Original[currentRange.Value], start: charsWritten);
+                    currentRange = null;
                 }
                 foreach (var diff in diffs)
                 {
@@ -75,15 +75,15 @@ public static class Patcher
             }
             else
             {
-                currentRange = currentRange.Equals(default)
-                    ? range
-                    : new Range(currentRange.Start, range.End);
+                currentRange = currentRange.HasValue
+                    ? new Range(currentRange.Value.Start, range.End)
+                    : range;
             }
         }
 
-        if (!currentRange.Equals(default))
+        if (currentRange.HasValue)
         {
-            charsWritten = destination.AppendLine(state.Original[currentRange], start: charsWritten);
+            charsWritten = destination.AppendLine(state.Original[currentRange.Value], start: charsWritten);
         }
 
         return charsWritten;

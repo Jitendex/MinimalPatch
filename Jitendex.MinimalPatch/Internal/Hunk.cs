@@ -44,7 +44,11 @@ internal sealed class Hunk
     }
 }
 
-internal readonly record struct DiffLine(Operation Operation, Range PatchRange);
+internal readonly record struct DiffLine
+(
+    Operation Operation,
+    Range PatchRange
+);
 
 internal enum Operation : byte
 {
