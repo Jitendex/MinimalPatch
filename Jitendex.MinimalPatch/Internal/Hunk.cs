@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2025 Stephen Kraus
 
 This file is part of MinimalPatch.
